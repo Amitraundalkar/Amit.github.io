@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amit Raundalkar – Java backend developer for digital banking</title>
+<meta name="description" content="Amit Raundalkar builds secure onboarding, OTP and payment services in Java and Spring Boot for digital banking. Try a live demo of an account-opening flow.">
+<script>try{var __t=localStorage.getItem("theme");if(__t)document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B3A2C'/%3E%3Ctext x='32' y='42' font-size='28' font-family='Arial' font-weight='700' text-anchor='middle' fill='%23E2B857'%3EAR%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+
+<style>
+  /* Design idea: banknote security printing. Deep note-green, brass gold, guilloche rosettes. */
+  :root {
+    --bg: #F2F5EC;
+    --surface: #FFFFFF;
+    --text: #0E2A21;
+    --muted: #4D635A;
+    --line: #CBD8C8;
+    --gold: #B8892B;
+    --gold-text: #7E570C;
+    --green: #0B3A2C;
+    --btn-bg: #0B3A2C;
+    --btn-fg: #F4F7EE;
+    --focus: #0B6B52;
+    --display: "Unbounded", "Trebuchet MS", system-ui, sans-serif;
+    --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #06241B;
+      --surface: #0C3326;
+      --text: #E9F3E4;
+      --muted: #9DB5A6;
+      --line: #1F4A3A;
+      --gold: #E2B857;
+      --gold-text: #E2B857;
+      --green: #0B3A2C;
+      --btn-bg: #E2B857;
+      --btn-fg: #1B1403;
+      --focus: #E2B857;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #06241B; --surface: #0C3326; --text: #E9F3E4; --muted: #9DB5A6; --line: #1F4A3A;
+    --gold: #E2B857; --gold-text: #E2B857; --green: #0B3A2C; --btn-bg: #E2B857; --btn-fg: #1B1403; --focus: #E2B857;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --bg: #F2F5EC; --surface: #FFFFFF; --text: #0E2A21; --muted: #4D635A; --line: #CBD8C8;
+    --gold: #B8892B; --gold-text: #7E570C; --green: #0B3A2C; --btn-bg: #0B3A2C; --btn-fg: #F4F7EE; --focus: #0B6B52;
+    color-scheme: light;
+  }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+  ::view-transition-old(root) { z-index: 1; }
+  ::view-transition-new(root) { z-index: 2; }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--body); font-size: 1.0625rem; line-height: 1.65; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+  .wrap { width: min(1140px, 100% - 2.5rem); margin-inline: auto; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; }
+
+  /* Guilloche art */
+  .ros { fill: none; stroke: var(--gold); }
+  .ros path, .ros circle { vector-effect: non-scaling-stroke; stroke-width: .6px; }
+  .wave { fill: none; stroke: currentColor; }
+  .wave path { vector-effect: non-scaling-stroke; stroke-width: .6px; }
+
+  /* The green "note" panels (hero and contact) */
+  .note {
+    position: relative; overflow: hidden; color: #E9F3E4;
+    background: linear-gradient(160deg, #0D4332 0%, #06251C 72%);
+    --gold: #E2B857; --gold-text: #E2B857; --muted: #A8C2B1; --line: #2A5C49;
+    --btn-bg: #E2B857; --btn-fg: #1B1403; --focus: #E2B857; --text: #E9F3E4;
+  }
+  .microtext { display: block; font-size: 6px; letter-spacing: .22em; line-height: 1; white-space: nowrap; overflow: hidden; color: var(--gold); opacity: .55; user-select: none; }
+
+  /* Progress */
+  .progress { position: fixed; top: 0; left: 0; height: 3px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: #E2B857; z-index: 60; }
+
+  /* Nav */
+  .nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: color-mix(in srgb, var(--bg) 80%, transparent); border-bottom: 1px solid var(--line); }
+  .nav .wrap { display: flex; justify-content: space-between; align-items: center; padding-block: .8rem; gap: 1rem; }
+  .logo { display: flex; align-items: center; gap: .7rem; text-decoration: none; font-family: var(--display); font-weight: 700; font-size: .95rem; }
+  .logo svg { width: 34px; height: 34px; background: var(--green); border-radius: 8px; padding: 3px; stroke: #E2B857; }
+  .nav ul { display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0; font-weight: 500; font-size: .95rem; align-items: center; }
+  .nav ul a { text-decoration: none; color: var(--muted); transition: color .2s; }
+  .nav ul a:hover { color: var(--text); }
+  .nav .cv { border: 1px solid var(--line); border-radius: 8px; padding: .35rem .8rem; color: var(--text) !important; font-weight: 600; }
+  .nav .cv:hover { border-color: var(--gold); }
+  @media (max-width: 720px) { .nav ul li:nth-child(-n+3) { display: none; } .logo span { display: none; } }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font-family: var(--body); font-weight: 600; font-size: 1rem; padding: .8rem 1.3rem; border-radius: 10px; border: 1px solid transparent; text-decoration: none; cursor: pointer; transition: transform .2s ease, translate .18s ease-out, box-shadow .2s ease, border-color .2s ease, opacity .2s; }
+  .btn.primary { background: var(--btn-bg); color: var(--btn-fg); }
+  .btn.primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 24px -8px var(--btn-bg); }
+  .btn.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--gold); transform: translateY(-2px); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; flex-wrap: wrap; gap: .7rem; }
+
+  /* Hero */
+  .hero { padding-block: clamp(3rem, 7vw, 5.5rem) calc(clamp(3rem, 7vw, 5.5rem) + 3.5rem); }
+  .hero .rosette-bg { position: absolute; width: min(1000px, 130vw); aspect-ratio: 1; right: -22%; top: -34%; opacity: .5; pointer-events: none; will-change: transform; animation: rosIn 2.6s cubic-bezier(.2,.7,.2,1) both, spin 220s linear 2.6s infinite; }
+  @keyframes rosIn { from { opacity: 0; transform: scale(.7) rotate(-30deg); } to { opacity: .5; transform: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hero .microtext.top { position: absolute; top: 10px; left: 0; right: 0; }
+  .hero-grid { position: relative; display: grid; gap: 3rem; align-items: center; }
+  @media (min-width: 980px) { .hero-grid { grid-template-columns: 1.08fr 1fr; gap: 3.5rem; } }
+  .hero h1 { font-weight: 800; font-size: clamp(2.5rem, 7vw, 4.6rem); line-height: 1.02; letter-spacing: -.035em; }
+  .hero h1 .l { display: block; overflow: hidden; padding-bottom: .1em; }
+  .hero h1 .l i { display: block; font-style: normal; transform: translateY(110%); animation: rise 1s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: var(--d); }
+  @keyframes rise { to { transform: none; } }
+  .hero .role { margin: 1.4rem 0 0; font-family: var(--display); font-weight: 500; font-size: clamp(1rem, 2.2vw, 1.3rem); line-height: 1.4; color: var(--gold); opacity: 0; animation: fade .8s ease 1s forwards; }
+  .hero .lead { margin: 1rem 0 0; max-width: 31rem; color: var(--muted); font-size: 1.1rem; opacity: 0; animation: fade .8s ease 1.2s forwards; }
+  .hero .cta { margin-top: 2rem; opacity: 0; animation: fade .8s ease 1.4s forwards; }
+  @keyframes fade { to { opacity: 1; } }
+
+  /* Demo panel */
+  .demo { background: rgba(4, 28, 21, .62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(226,184,87,.4); border-radius: 20px; padding: 1.5rem; box-shadow: 0 40px 70px -35px rgba(0,0,0,.8); opacity: 0; animation: fade .9s ease 1.1s forwards; }
+  .demo h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; }
+  .demo .sub { margin: .4rem 0 0; font-size: .92rem; color: var(--muted); }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; list-style: none; margin: 1.3rem 0 1.3rem; padding: 0; }
+  .steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: .4rem; font-size: .78rem; color: var(--muted); text-align: center; }
+  .steps li::before { content: attr(data-n); position: relative; z-index: 1; width: 1.9rem; height: 1.9rem; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: #06251C; font-weight: 600; font-size: .8rem; transition: all .3s; }
+  .steps li:not(:last-child)::after { content: ""; position: absolute; top: .95rem; left: calc(50% + 1.2rem); right: calc(-50% + 1.2rem); height: 1px; background: var(--line); transition: background .3s; }
+  .steps li.active { color: #fff; }
+  .steps li.active::before { background: var(--gold); color: #1B1403; border-color: var(--gold); }
+  .steps li.done::before { content: "✓"; border-color: var(--gold); color: var(--gold); }
+  .steps li.done::after { background: var(--gold); }
+  .stage { min-height: 19.5rem; }
+  .pane { display: grid; gap: .8rem; align-content: start; }
+  .pane[hidden] { display: none !important; }
+  .pane label { font-size: .85rem; color: var(--muted); font-weight: 500; }
+  .pane input { width: 100%; font: inherit; color: #fff; background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 10px; padding: .75rem .9rem; }
+  .pane input::placeholder { color: #7E9A8B; }
+  .pane input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 0 3px rgba(226,184,87,.25); }
+  .pane p { margin: 0; }
+  .hint { font-size: .85rem; color: var(--muted); }
+  .rule { margin: 1.1rem 0 0; padding-top: .9rem; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); min-height: 3.6em; }
+  .otp { display: flex; gap: .6rem; }
+  .pane .otp input { width: 3.6rem; height: 3.8rem; padding: 0; text-align: center; font-family: var(--display); font-weight: 700; font-size: 1.5rem; }
+  .otp.shake { animation: shake .4s; }
+  @keyframes shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+  .status { font-size: .9rem; min-height: 1.4em; }
+  .status.err { color: #FF8A8A; } .status.good { color: #7FE3A8; }
+  .linkbtn { background: none; border: 0; padding: 0; color: var(--gold); font: inherit; font-size: .88rem; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; justify-self: start; }
+  .scan { position: relative; width: 150px; height: 150px; margin: .3rem auto 0; }
+  .scan svg { width: 100%; height: 100%; }
+  .scan .line { position: absolute; left: 8%; right: 8%; height: 2px; background: var(--gold); box-shadow: 0 0 14px var(--gold); animation: scanY 1.3s ease-in-out infinite alternate; }
+  @keyframes scanY { from { top: 12%; } to { top: 86%; } }
+  .checks { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .5rem; }
+  .checks li { display: flex; align-items: center; gap: .65rem; font-size: .92rem; color: var(--muted); transition: color .3s; }
+  .checks li::before { content: ""; width: 1rem; height: 1rem; border-radius: 50%; border: 1.5px solid var(--line); flex: none; transition: all .3s; }
+  .checks li.done { color: #fff; }
+  .checks li.done::before { background: var(--gold); border-color: var(--gold); }
+
+  /* Account card */
+  .cardwrap { perspective: 900px; display: grid; justify-items: center; }
+  .cardwrap.show { animation: cardIn 1s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes cardIn { from { opacity: 0; transform: rotateY(-85deg) translateY(24px); } to { opacity: 1; transform: none; } }
+  .bank-card { position: relative; width: min(330px, 100%); aspect-ratio: 1.586; border-radius: 16px; padding: 1rem 1.15rem; background: linear-gradient(135deg, #12664B, #082E23 72%); border: 1px solid rgba(226,184,87,.55); overflow: hidden; box-shadow: 0 26px 40px -18px rgba(0,0,0,.8); transition: transform .15s ease-out; display: flex; flex-direction: column; justify-content: space-between; color: #F1F6EC; }
+  .bank-card .art { position: absolute; right: -32%; top: -45%; width: 105%; opacity: .55; }
+  .bank-card .shine { position: absolute; inset: 0; background: radial-gradient(220px circle at var(--sx, 30%) var(--sy, 20%), rgba(255,255,255,.25), transparent 60%); mix-blend-mode: soft-light; pointer-events: none; }
+  .bank-card > * { position: relative; }
+  .bank-card .top { display: flex; justify-content: space-between; align-items: center; }
+  .bank-card .bname { font-family: var(--display); font-weight: 700; font-size: .85rem; }
+  .bank-card .type { font-size: .72rem; color: #E2B857; }
+  .chip { width: 2.5rem; height: 1.9rem; border-radius: 6px; background: linear-gradient(90deg, transparent 48%, rgba(0,0,0,.25) 48% 52%, transparent 52%), linear-gradient(0deg, transparent 48%, rgba(0,0,0,.25) 48% 52%, transparent 52%), linear-gradient(135deg, #F3D58A, #B8892B); }
+  .acct { font-family: var(--mono); font-size: clamp(.95rem, 4.4vw, 1.18rem); letter-spacing: .1em; }
+  .bank-card .bottom { display: flex; justify-content: space-between; align-items: flex-end; font-size: .72rem; gap: .5rem; }
+  .bank-card .bottom b { display: block; font-family: var(--mono); font-size: .8rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+  .result { text-align: center; font-size: .95rem; }
+  .result strong { color: var(--gold); }
+
+  /* Stats overlapping the hero */
+  .stats-wrap { position: relative; z-index: 2; margin-top: -3.5rem; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: .9rem; }
+  @media (min-width: 820px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.3rem 1.3rem; box-shadow: 0 18px 40px -26px rgba(5, 30, 22, .5); }
+  .stat strong { display: block; font-family: var(--display); font-weight: 800; font-size: clamp(1.9rem, 4.2vw, 2.9rem); letter-spacing: -.04em; line-height: 1.05; color: var(--gold-text); }
+  .stat span { display: block; margin-top: .55rem; color: var(--muted); font-size: .92rem; max-width: 12rem; position: relative; }
+  .stat .emblem { position: absolute; right: -34px; bottom: -34px; width: 130px; height: 130px; opacity: .45; }
+
+  /* Sections */
+  section { padding-block: clamp(3.5rem, 8vw, 6rem); }
+  .sec-head { margin-bottom: 2.4rem; }
+  .sec-head h2 { font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.6rem); letter-spacing: -.035em; line-height: 1.12; max-width: 22ch; }
+  .sec-head p { margin: .8rem 0 0; color: var(--muted); max-width: 38rem; }
+
+  /* About */
+  .about-grid { display: grid; gap: 2.5rem; align-items: start; }
+  @media (min-width: 960px) { .about-grid { grid-template-columns: 1fr 1.1fr; } }
+  .about-text p { margin: 0 0 1.1rem; color: var(--muted); max-width: 34rem; }
+  .about-text p.big { color: var(--text); font-size: 1.25rem; line-height: 1.5; }
+  .certs { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; gap: .5rem; }
+  .certs li { display: flex; gap: .7rem; align-items: center; font-weight: 500; }
+  .certs li::before { content: "✓"; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--green); color: #E2B857; font-size: .8rem; flex: none; }
+  .code { background: #072A20; color: #E9F3E4; border: 1px solid #1F4A3A; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 60px -36px rgba(0,0,0,.7); }
+  .code-tab { display: flex; justify-content: space-between; padding: .65rem 1rem; background: #0B3A2C; border-bottom: 1px solid #1F4A3A; font-family: var(--mono); font-size: .78rem; color: #A8C2B1; }
+  .code pre { margin: 0; padding: 1.1rem 1rem 1.3rem; overflow-x: auto; font-family: var(--mono); font-size: .83rem; line-height: 1.75; }
+  .tk { color: #E2B857; } .ta { color: #7FE3A8; } .ts { color: #9CC8F5; } .tc { color: #C9B6F2; }
+
+  /* Projects */
+  .projects { display: grid; gap: 1.3rem; }
+  @media (min-width: 820px) { .projects { grid-template-columns: repeat(2, 1fr); } }
+  .proj { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: transform .25s ease, translate .25s ease, border-color .25s ease, box-shadow .25s ease; }
+  .proj:hover { translate: 0 -5px; border-color: var(--gold); box-shadow: 0 26px 44px -30px rgba(5, 30, 22, .6); }
+  .band { position: relative; height: 62px; background: linear-gradient(135deg, #0F5A43, #082E23); color: #E2B857; }
+  .band svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .band b { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-weight: 500; font-size: .75rem; letter-spacing: .08em; background: #082E23; color: #E2B857; padding: .2rem .6rem; border-radius: 4px; border: 1px solid rgba(226,184,87,.5); }
+  .proj .body { display: flex; flex-direction: column; flex: 1; padding: 1.4rem 1.5rem 1.5rem; }
+  .proj h3 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; }
+  .proj .ep { margin: .35rem 0 0; font-family: var(--mono); font-size: .8rem; color: var(--gold-text); }
+  .proj p { margin: .9rem 0 1.2rem; color: var(--muted); font-size: .98rem; }
+  .proj .metric { margin-top: auto; padding-top: 1rem; border-top: 1px dashed var(--line); }
+  .proj .metric strong { display: block; font-family: var(--display); font-weight: 800; font-size: 1.55rem; letter-spacing: -.03em; line-height: 1.15; color: var(--gold-text); }
+  .proj .metric small { display: block; margin-top: .3rem; color: var(--muted); font-size: .88rem; }
+  .proj .stack { margin: 1rem 0 0; font-size: .85rem; color: var(--muted); }
+
+  /* Timeline */
+  .timeline { position: relative; list-style: none; margin: 0; padding: 0 0 0 2.2rem; max-width: 52rem; }
+  .timeline::before, .timeline::after { content: ""; position: absolute; left: .5rem; top: .5rem; bottom: .5rem; width: 2px; }
+  .timeline::before { background: var(--line); }
+  .timeline::after { background: var(--gold); transform-origin: top; transform: scaleY(var(--p, 0)); }
+  .timeline > li { position: relative; padding-bottom: 2.6rem; }
+  .timeline > li:last-child { padding-bottom: 0; }
+  .timeline > li::before { content: ""; position: absolute; left: -2.2rem; top: .45rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--bg); border: 2px solid var(--line); transition: all .3s; }
+  .timeline > li.in::before { border-color: var(--gold); background: var(--gold); }
+  .timeline .when { font-size: .9rem; color: var(--gold-text); font-weight: 600; }
+  .timeline h3 { margin: .2rem 0 .1rem; font-size: 1.2rem; letter-spacing: -.02em; }
+  .timeline .where { color: var(--muted); font-size: .95rem; }
+  .timeline ul { margin: .9rem 0 0; padding-left: 1.1rem; color: var(--muted); }
+  .timeline ul li { padding: 0 0 .45rem; font-size: .98rem; }
+
+  /* Skills */
+  .skills { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line); }
+  .skills div { display: grid; gap: .3rem; padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+  @media (min-width: 760px) { .skills div { grid-template-columns: 15rem 1fr; gap: 2rem; } }
+  .skills dt { font-family: var(--display); font-weight: 700; font-size: .95rem; }
+  .skills dd { margin: 0; color: var(--muted); }
+
+  /* Contact */
+  .contact { padding-block: clamp(4rem, 9vw, 7rem); }
+  .contact .rosette-bg { position: absolute; width: 760px; aspect-ratio: 1; left: -240px; bottom: -380px; opacity: .4; pointer-events: none; }
+  .contact .inner { position: relative; }
+  .contact h2 { font-weight: 800; font-size: clamp(2.2rem, 6.5vw, 4.6rem); letter-spacing: -.04em; line-height: 1.04; max-width: 14ch; }
+  .contact .mail { display: inline-block; margin-top: 1.8rem; font-family: var(--display); font-weight: 600; font-size: clamp(1.05rem, 3vw, 1.7rem); color: var(--gold); text-decoration-thickness: 2px; text-underline-offset: 8px; word-break: break-all; }
+  .contact .row { margin-top: 1.8rem; }
+  .contact .links { display: flex; flex-wrap: wrap; gap: .4rem 1.8rem; list-style: none; padding: 0; margin: 2rem 0 0; font-weight: 500; color: var(--muted); }
+  .contact .links a { text-underline-offset: 5px; }
+  .contact .status { margin-top: 1rem; min-height: 1.4em; color: #7FE3A8; font-size: .9rem; }
+  footer { background: #06251C; color: #A8C2B1; padding-block: 1.2rem 2rem; font-size: .88rem; --gold: #E2B857; }
+  footer .microtext { margin-bottom: 1.1rem; }
+
+
+  /* ===== Engagement layer ===== */
+  .cursor, .cursor-dot { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 100; opacity: 0; }
+  .cursor { width: 38px; height: 38px; margin: -19px 0 0 -19px; border: 1.5px solid var(--gold); border-radius: 50%; transition: width .25s, height .25s, margin .25s, background .25s, opacity .3s; }
+  .cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--gold); transition: opacity .3s; }
+  .cursor.on, .cursor-dot.on { opacity: 1; }
+  .cursor.big { width: 66px; height: 66px; margin: -33px 0 0 -33px; background: color-mix(in srgb, var(--gold) 16%, transparent); }
+  @media (pointer: coarse) { .cursor, .cursor-dot { display: none; } }
+  #confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 90; }
+
+  .hero .typed { margin: 1.1rem 0 0; font-family: var(--mono); font-size: .95rem; color: var(--gold); min-height: 1.6em; opacity: 0; animation: fade .8s ease 1.3s forwards; }
+  .hero .typed::before { content: "> "; opacity: .7; }
+  .caret { display: inline-block; width: .6ch; height: 1.05em; background: var(--gold); vertical-align: -.18em; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .hero h1.ready .l { overflow: visible; }
+  .hero h1 .ch { display: inline-block; transition: transform .45s cubic-bezier(.2,.8,.2,1), color .8s ease; }
+  .hero h1 .ch:hover { transform: translateY(-10px) rotate(-4deg); color: var(--gold); transition: transform .15s ease-out, color .1s; }
+
+  nav[aria-label="Main"] { position: relative; }
+  .nav-ind { position: absolute; left: 0; bottom: -9px; height: 2px; width: 0; border-radius: 2px; background: var(--gold); opacity: 0; transition: transform .35s cubic-bezier(.2,.8,.2,1), width .35s, opacity .2s; }
+  .nav ul a.current { color: var(--text); }
+
+  .tilt::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(260px circle at var(--gx, 50%) var(--gy, 0%), color-mix(in srgb, var(--gold) 24%, transparent), transparent 65%); }
+  .tilt:hover::after { opacity: 1; }
+
+  .wave path { transform-origin: 200px 31px; animation: breathe 2.8s ease-in-out infinite alternate; animation-play-state: paused; }
+  .proj:hover .wave path { animation-play-state: running; }
+  @keyframes breathe { from { transform: scaleY(.5); } to { transform: scaleY(1.25); } }
+
+  .sec-head h2::after { content: ""; display: block; height: 3px; width: 0; margin-top: 1rem; background: var(--gold); border-radius: 2px; transition: width 1s cubic-bezier(.2,.8,.2,1) .35s; }
+  .sec-head.in h2::after { width: 64px; }
+
+  .skills dt { transition: translate .3s ease, color .3s ease; }
+  .skills div:hover dt { translate: 8px 0; color: var(--gold-text); }
+
+  .timeline > li.in:first-child::before { animation: dotPulse 2.2s ease-out infinite; }
+  @keyframes dotPulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 60%, transparent); } 70%, 100% { box-shadow: 0 0 0 13px transparent; } }
+
+  .btn.pulse { animation: btnPulse 2.2s ease-out infinite; }
+  @keyframes btnPulse { 0% { box-shadow: 0 0 0 0 rgba(226,184,87,.6); } 70%, 100% { box-shadow: 0 0 0 16px rgba(226,184,87,0); } }
+
+  .totop { position: fixed; right: 1.2rem; bottom: 1.2rem; z-index: 55; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 50%; background: #0B3A2C; cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(14px) scale(.9); transition: opacity .3s, transform .3s; box-shadow: 0 10px 24px -8px rgba(0,0,0,.5); }
+  .totop.show { opacity: 1; pointer-events: auto; transform: none; }
+  .totop:hover { transform: translateY(-3px); }
+  .totop svg { width: 100%; height: 100%; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .totop .track { stroke: rgba(226,184,87,.25); stroke-width: 2.5; }
+  .totop .prog { stroke: #E2B857; stroke-width: 2.5; transition: stroke-dashoffset .15s linear; }
+  .totop path { stroke: #E2B857; stroke-width: 2.5; }
+
+
+  /* ===== v4: more interactive ===== */
+  .spot { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(380px circle at var(--sx, 70%) var(--sy, 30%), rgba(226,184,87,.13), transparent 70%); }
+  .dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .ripple { position: fixed; left: 0; top: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid var(--gold); pointer-events: none; z-index: 95; animation: rip .7s ease-out forwards; }
+  @keyframes rip { to { transform: scale(9); opacity: 0; } }
+
+  .theme { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--text); display: grid; place-items: center; cursor: pointer; transition: border-color .2s, transform .3s; }
+  .theme:hover { border-color: var(--gold); transform: rotate(18deg); }
+  .theme svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .theme .sun { display: none; }
+  :root[data-theme="dark"] .theme .sun { display: block; }
+  :root[data-theme="dark"] .theme .moon { display: none; }
+  .kbd { display: inline-flex; align-items: center; gap: .55rem; font: inherit; font-size: .88rem; font-weight: 500; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: .3rem .6rem; cursor: pointer; transition: border-color .2s, color .2s; }
+  .kbd:hover { border-color: var(--gold); color: var(--text); }
+  .kbd kbd { font-family: var(--mono); font-size: .75rem; padding: .05rem .4rem; border-radius: 5px; background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+  @media (max-width: 1000px) { .kbd .lbl { display: none; } }
+  @media (max-width: 720px) { .kbd { display: none; } }
+
+  .toast { position: fixed; left: 50%; bottom: 1.4rem; transform: translate(-50%, 20px); background: #0B3A2C; color: #F1F6EC; border: 1px solid #E2B857; padding: .8rem 1.2rem; border-radius: 12px; opacity: 0; pointer-events: none; transition: opacity .35s, transform .35s; z-index: 120; max-width: 90vw; text-align: center; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .palette { position: fixed; inset: 0; z-index: 110; background: rgba(3,18,13,.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; justify-items: center; align-items: start; padding-top: 14vh; }
+  .palette[hidden] { display: none; }
+  .palette-box { width: min(560px, 92vw); background: #0B3A2C; color: #E9F3E4; border: 1px solid rgba(226,184,87,.5); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 80px -30px #000; animation: palIn .22s ease-out; }
+  @keyframes palIn { from { opacity: 0; transform: translateY(-12px) scale(.98); } }
+  .palette-box input { width: 100%; font: inherit; font-size: 1.05rem; background: transparent; border: 0; border-bottom: 1px solid #2A5C49; color: #fff; padding: 1rem 1.2rem; outline: none; }
+  .palette-box ul { list-style: none; margin: 0; padding: .4rem; max-height: 46vh; overflow: auto; }
+  .palette-box li { padding: .65rem .8rem; border-radius: 8px; cursor: pointer; }
+  .palette-box li[aria-selected="true"] { background: rgba(226,184,87,.18); color: #fff; }
+  .palette-box li.none { color: #9DB5A6; cursor: default; }
+  .pal-hint { margin: 0; padding: .6rem 1.2rem; border-top: 1px solid #2A5C49; font-size: .8rem; color: #9DB5A6; }
+
+  .code-tab .tabr { display: flex; align-items: center; gap: .8rem; }
+  .copycode { font: inherit; font-size: .75rem; color: #E2B857; background: transparent; border: 1px solid rgba(226,184,87,.5); border-radius: 6px; padding: .12rem .6rem; cursor: pointer; transition: background .2s; }
+  .copycode:hover { background: rgba(226,184,87,.15); }
+
+  /* Request tracer */
+  .trace-grid { display: grid; gap: 1.6rem; }
+  @media (min-width: 960px) { .trace-grid { grid-template-columns: 300px 1fr; align-items: start; } }
+  .scen { display: grid; gap: .65rem; }
+  .scen button:not(.btn) { text-align: left; font: inherit; padding: .85rem 1rem; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+  .scen button:not(.btn):hover { border-color: var(--gold); transform: translateX(4px); }
+  .scen button b { display: block; font-family: var(--display); font-size: .9rem; font-weight: 700; }
+  .scen button span { display: block; margin-top: .15rem; font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+  .scen button[aria-pressed="true"] { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); }
+  .scen button.bad[aria-pressed="true"] { border-color: #E5566D; background: color-mix(in srgb, #E5566D 10%, var(--surface)); }
+  .tracebox { background: #072A20; color: #E9F3E4; border: 1px solid #1F4A3A; border-radius: 16px; padding: 1rem; box-shadow: 0 30px 60px -36px rgba(0,0,0,.7); }
+  .statusline { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: .78rem; color: #A8C2B1; padding: .1rem .3rem .6rem; }
+  .statusline .good { color: #7FE3A8; } .statusline .err { color: #FF8A8A; }
+  .tracebox svg { width: 100%; height: auto; display: block; }
+  .t-edge { stroke: #2A5C49; stroke-width: 2; stroke-dasharray: 4 6; fill: none; }
+  .t-node { cursor: pointer; outline: none; }
+  .t-node rect { fill: #0B3A2C; stroke: #2A5C49; stroke-width: 1.5; transition: stroke .15s, fill .15s; }
+  .t-node text { fill: #E9F3E4; font-family: var(--mono); font-size: 12px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .t-node:hover rect { stroke: #E2B857; }
+  .t-node:focus-visible rect { stroke: #E2B857; stroke-width: 3; }
+  .t-node.hit rect { stroke: #E2B857; fill: #3A3414; }
+  .t-packet { filter: drop-shadow(0 0 6px currentColor); }
+  .caption { margin: .6rem 0 0; padding: .8rem 1rem; min-height: 3.6rem; background: #06251C; border-radius: 10px; font-size: .95rem; color: #CFE0D3; }
+  .caption b { color: #E2B857; }
+  .caption.bad b { color: #FF8A8A; }
+
+  /* Project filters */
+  .filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1.6rem; }
+  .filters button { font: inherit; font-weight: 600; font-size: .9rem; padding: .45rem 1rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; transition: border-color .2s, background .2s, color .2s; }
+  .filters button:hover { border-color: var(--gold); }
+  .filters button[aria-pressed="true"] { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+  .proj.reveal { transition: opacity .5s ease, transform .7s ease, translate .25s ease, filter .4s ease, scale .4s ease, border-color .25s ease, box-shadow .25s ease; transition-delay: var(--d, 0s); }
+  .proj.reveal.dim { opacity: .2; filter: grayscale(1); scale: .965; pointer-events: none; }
+
+  /* Experience accordion */
+  .toggle { display: inline-flex; align-items: center; gap: .5rem; margin-top: .7rem; font: inherit; font-size: .9rem; font-weight: 600; color: var(--gold-text); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: .3rem .8rem; cursor: pointer; transition: border-color .2s; }
+  .toggle:hover { border-color: var(--gold); }
+  .toggle::after { content: ""; width: .5rem; height: .5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform .3s; }
+  .toggle[aria-expanded="true"]::after { transform: rotate(225deg) translateY(-2px); }
+  .collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s ease; }
+  .collapse.open { grid-template-rows: 1fr; }
+  .collapse > .inner { overflow: hidden; min-height: 0; visibility: hidden; transition: visibility 0s .45s; }
+  .collapse.open > .inner { visibility: visible; transition-delay: 0s; }
+
+  /* Terminal */
+  .term { background: #072A20; color: #CFE0D3; border: 1px solid #1F4A3A; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 60px -36px rgba(0,0,0,.7); font-family: var(--mono); font-size: .9rem; }
+  .term :focus-visible { outline-color: #E2B857; }
+  .term-bar { display: flex; justify-content: space-between; padding: .65rem 1rem; background: #0B3A2C; border-bottom: 1px solid #1F4A3A; color: #A8C2B1; font-size: .78rem; }
+  .term-body { height: 21rem; overflow-y: auto; padding: 1rem 1.1rem; line-height: 1.65; }
+  .tl { white-space: pre-wrap; word-break: break-word; }
+  .tl.th { color: #E2B857; font-weight: 500; }
+  .tl.terr { color: #FF8A8A; }
+  .tl .pr { color: #7FE3A8; }
+  .tl a { color: #9CC8F5; text-underline-offset: 3px; }
+  .term-input { display: flex; align-items: center; gap: .6rem; padding: .6rem 1rem; border-top: 1px solid #1F4A3A; background: #06251C; }
+  .term-input label { color: #7FE3A8; }
+  .term-input input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #fff; font: inherit; }
+  .term-input .btn { padding: .45rem .9rem; font-size: .85rem; --btn-bg: #E2B857; --btn-fg: #1B1403; }
+  .chips { display: flex; flex-wrap: wrap; gap: .5rem; padding: .8rem 1rem 1rem; border-top: 1px solid #1F4A3A; }
+  .chips button { font: inherit; font-size: .8rem; color: #E9F3E4; background: #0B3A2C; border: 1px solid #2A5C49; border-radius: 999px; padding: .3rem .8rem; cursor: pointer; transition: border-color .2s, background .2s; }
+  .chips button:hover { border-color: #E2B857; background: #124634; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ripple { display: none; }
+    .dust, .spot { display: none; }
+    .collapse, .toast, .theme, .scen button, .palette-box { transition: none; animation: none; }
+  }
+
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; transition-delay: var(--d, 0s); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .hero .rosette-bg { animation: none; opacity: .5; }
+    .hero h1 .l i { animation: none; transform: none; }
+    .hero .role, .hero .lead, .hero .cta, .demo { animation: none; opacity: 1; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .scan .line { animation: none; top: 50%; }
+    .cardwrap.show { animation: none; }
+    .otp.shake { animation: none; }
+    .btn, .proj { transition: none; }
+    .hero .typed { animation: none; opacity: 1; }
+    .caret, .btn.pulse, .wave path, .timeline > li.in:first-child::before { animation: none; }
+    .totop, .nav-ind, .sec-head h2::after { transition: none; }
+    .hero h1 .ch { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<button class="totop" id="totop" type="button" aria-label="Back to top">
+  <svg viewBox="0 0 48 48" aria-hidden="true"><circle class="track" cx="24" cy="24" r="20"/><circle class="prog" cx="24" cy="24" r="20" transform="rotate(-90 24 24)"/><path d="M24 31V17M17 23l7-7 7 7"/></svg>
+</button>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Amit Raundalkar, back to top">
+      <svg class="ros" data-ros="small" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
+      <span>Amit Raundalkar</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a class="cv" href="Amit_Raundalkar_resume.docx" download>Résumé</a></li>
+        <li><button class="kbd" id="paletteBtn" type="button" aria-label="Open quick menu"><span class="lbl">Quick menu</span> <kbd>Ctrl K</kbd></button></li>
+        <li><button class="theme" id="theme" type="button" aria-label="Switch theme">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button></li>
+      </ul>
+      <i class="nav-ind" id="navInd" aria-hidden="true"></i>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="note hero" id="hero" style="padding-block: 0">
+    <svg class="ros rosette-bg" data-ros="big" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
+    <canvas class="dust" id="dust" aria-hidden="true"></canvas>
+    <div class="spot" id="spot" aria-hidden="true"></div>
+    <span class="microtext top" aria-hidden="true" data-micro></span>
+    <div class="wrap hero" style="padding-block: clamp(3rem, 7vw, 5.5rem) calc(clamp(3rem, 7vw, 5.5rem) + 3.5rem)">
+      <div class="hero-grid">
+        <div>
+          <h1><span class="l"><i style="--d:.15s">Amit</i></span><span class="l"><i style="--d:.3s">Raundalkar</i></span></h1>
+          <p class="role">Java backend developer for digital banking</p>
+          <p class="lead">I build the onboarding, OTP and payment services behind banking apps used by 500K+ customers. Try a small version of one below.</p>
+          <p class="typed" aria-hidden="true"><span id="typed"></span><span class="caret"></span></p>
+          <div class="row cta">
+            <a class="btn primary" href="#projects">See what I've built</a>
+            <a class="btn ghost" href="Amit_Raundalkar_resume.docx" download>Download résumé</a>
+          </div>
+        </div>
+
+        <div class="demo" id="demo" role="region" aria-labelledby="demoTitle">
+          <h2 id="demoTitle">Open an account in under a minute</h2>
+          <p class="sub">A live demo of the kind of flow I build for banks. Nothing leaves your browser.</p>
+
+          <ol class="steps" id="steps" aria-label="Progress">
+            <li data-n="1" class="active">Details</li>
+            <li data-n="2">OTP</li>
+            <li data-n="3">Identity</li>
+            <li data-n="4">Account</li>
+          </ol>
+
+          <div class="stage">
+            <div class="pane" data-pane="0">
+              <div>
+                <label for="nm">Your name</label>
+                <input id="nm" autocomplete="off" maxlength="22" placeholder="For example, Priya Sharma">
+              </div>
+              <div>
+                <label for="mb">Mobile number</label>
+                <input id="mb" value="+91 98765 43210" inputmode="tel" autocomplete="off">
+              </div>
+              <button class="btn primary pulse" id="send" type="button">Send OTP</button>
+            </div>
+
+            <div class="pane" data-pane="1" hidden>
+              <p>We sent a 4-digit code to <b id="mbShow"></b>.<br><span class="hint">Demo code: <b id="codeShow"></b>. Try a wrong code first to see the attempt limit.</span></p>
+              <div class="otp" id="otp" role="group" aria-label="One-time password, 4 digits">
+                <input inputmode="numeric" maxlength="1" aria-label="Digit 1" autocomplete="one-time-code">
+                <input inputmode="numeric" maxlength="1" aria-label="Digit 2">
+                <input inputmode="numeric" maxlength="1" aria-label="Digit 3">
+                <input inputmode="numeric" maxlength="1" aria-label="Digit 4">
+              </div>
+              <p class="status" id="otpStatus" role="status"></p>
+              <div class="row">
+                <button class="btn primary" id="verify" type="button">Verify</button>
+                <button class="btn ghost" id="resend" type="button" disabled>Resend in 15s</button>
+              </div>
+              <button class="linkbtn" id="fill" type="button">Fill in the demo code for me</button>
+            </div>
+
+            <div class="pane" data-pane="2" hidden>
+              <div class="scan" aria-hidden="true">
+                <svg viewBox="0 0 160 160" fill="none" stroke="#E2B857" stroke-width="2" stroke-linecap="round">
+                  <path d="M10 40V14a4 4 0 0 1 4-4h26M120 10h26a4 4 0 0 1 4 4v26M150 120v26a4 4 0 0 1-4 4h-26M40 150H14a4 4 0 0 1-4-4v-26" stroke-width="3"/>
+                  <ellipse cx="80" cy="66" rx="26" ry="31" stroke-opacity=".8"/>
+                  <path d="M30 138c4-26 26-38 50-38s46 12 50 38" stroke-opacity=".8"/>
+                </svg>
+                <i class="line"></i>
+              </div>
+              <ul class="checks" id="checks">
+                <li>Passport details validated</li>
+                <li>Signature matched</li>
+                <li>Selfie liveness confirmed</li>
+              </ul>
+            </div>
+
+            <div class="pane" data-pane="3" hidden>
+              <div class="cardwrap" id="cardwrap">
+                <div class="bank-card" id="bankCard">
+                  <svg class="ros art" data-ros="small" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
+                  <span class="shine"></span>
+                  <div class="top"><span class="bname">Demo Bank</span><span class="type">Savings</span></div>
+                  <div><div class="chip"></div></div>
+                  <div class="acct" id="acct" aria-label="Account number">0000 0000 0000</div>
+                  <div class="bottom">
+                    <span>Account holder<b id="cardName">Your name</b></span>
+                    <span>CIF<b id="cif">0000000</b></span>
+                  </div>
+                </div>
+              </div>
+              <p class="result" id="result" role="status"></p>
+              <div class="row" style="justify-content:center">
+                <button class="btn ghost" id="restart" type="button">Try again</button>
+                <a class="btn primary" href="#projects">See the real thing</a>
+              </div>
+            </div>
+          </div>
+
+          <p class="rule" id="rule"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-wrap">
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat reveal"><svg class="ros emblem" data-ros="small" viewBox="-110 -110 220 220" aria-hidden="true"></svg><strong data-count="500" data-suffix="K+">0</strong><span>Customers served by the APIs I built</span></div>
+        <div class="stat reveal" style="--d:.08s"><svg class="ros emblem" data-ros="small" viewBox="-110 -110 220 220" aria-hidden="true"></svg><strong data-count="28" data-suffix="+">0</strong><span>REST APIs built for banking</span></div>
+        <div class="stat reveal" style="--d:.16s"><svg class="ros emblem" data-ros="small" viewBox="-110 -110 220 220" aria-hidden="true"></svg><strong data-count="30" data-suffix="%">0</strong><span>Fewer onboarding drop-offs</span></div>
+        <div class="stat reveal" style="--d:.24s"><svg class="ros emblem" data-ros="small" viewBox="-110 -110 220 220" aria-hidden="true"></svg><strong data-count="35" data-suffix="%">0</strong><span>Faster API responses, at best</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="wrap about-grid">
+      <div class="about-text">
+        <div class="sec-head reveal"><h2>I build the parts of banking that must not fail.</h2></div>
+        <p class="big reveal">Identity checks, one-time passwords and money movement all need to be fast, secure and easy to trust.</p>
+        <p class="reveal">I design end-to-end onboarding systems, payment integrations and OTP and authentication services using Java, Spring Boot, Hibernate/JPA and MySQL. I'm comfortable on banking platforms such as Finacle and with FEBA and DEH integrations.</p>
+        <p class="reveal">I work closely with business analysts, QA and architects in Agile teams, and I stay with a feature through code review, testing and production support.</p>
+        <ul class="certs reveal" aria-label="Certifications">
+          <li>Infosys Certified Java SE8 Developer</li>
+          <li>Infosys Certified Spring Associate</li>
+        </ul>
+      </div>
+      <div class="code reveal">
+        <div class="code-tab"><span>OtpService.java</span><span class="tabr"><span>illustrative sample</span><button class="copycode" id="copyCode" type="button">Copy</button></span></div>
+        <pre aria-label="Sample Spring Boot OTP verification code"><code id="codeBody"></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACE -->
+  <section id="trace" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>Follow a request through a bank</h2>
+        <p>Pick a scenario and watch it travel through a simplified banking backend. Click any box to see what it does.</p>
+      </div>
+      <div class="trace-grid">
+        <div class="scen reveal" id="scen">
+          <button type="button" data-flow="account" aria-pressed="true"><b>Open an account</b><span>POST /onboarding/kyc</span></button>
+          <button type="button" data-flow="otp" aria-pressed="false"><b>Verify an OTP</b><span>POST /otp/verify</span></button>
+          <button type="button" data-flow="fund" aria-pressed="false"><b>Fund a Fixed Deposit</b><span>POST /fd/fund</span></button>
+          <button type="button" class="bad" data-flow="replay" aria-pressed="false"><b>Replay an old request</b><span>POST /fd/fund (attack)</span></button>
+          <button class="btn ghost" id="traceRun" type="button">Run again</button>
+        </div>
+        <div class="tracebox reveal" id="traceBox">
+          <div class="statusline"><span id="traceStatus">Ready</span><span>simplified example architecture</span></div>
+          <svg viewBox="0 0 600 400" role="group" aria-label="Request flow diagram">
+            <path id="te-cg" class="t-edge" d="M70 200 L220 200"/>
+            <path id="te-ga" class="t-edge" d="M220 200 L370 70"/>
+            <path id="te-go" class="t-edge" d="M220 200 L370 200"/>
+            <path id="te-od" class="t-edge" d="M370 200 L530 200"/>
+            <path id="te-ok" class="t-edge" d="M370 200 L370 330"/>
+            <path id="te-kw" class="t-edge" d="M370 330 L530 330"/>
+            <g class="t-node" id="tn-c" tabindex="0" role="button" aria-label="Client"><rect x="22" y="178" width="96" height="44" rx="10"/><text x="70" y="200">Client</text></g>
+            <g class="t-node" id="tn-g" tabindex="0" role="button" aria-label="Gateway"><rect x="172" y="178" width="96" height="44" rx="10"/><text x="220" y="200">Gateway</text></g>
+            <g class="t-node" id="tn-a" tabindex="0" role="button" aria-label="Auth and JWT"><rect x="322" y="48" width="96" height="44" rx="10"/><text x="370" y="70">Auth / JWT</text></g>
+            <g class="t-node" id="tn-o" tabindex="0" role="button" aria-label="Banking API"><rect x="322" y="178" width="96" height="44" rx="10"/><text x="370" y="200">Banking API</text></g>
+            <g class="t-node" id="tn-d" tabindex="0" role="button" aria-label="MySQL"><rect x="482" y="178" width="96" height="44" rx="10"/><text x="530" y="200">MySQL</text></g>
+            <g class="t-node" id="tn-k" tabindex="0" role="button" aria-label="Payment gateway"><rect x="322" y="308" width="96" height="44" rx="10"/><text x="370" y="330">Pay Gateway</text></g>
+            <g class="t-node" id="tn-w" tabindex="0" role="button" aria-label="Finacle"><rect x="482" y="308" width="96" height="44" rx="10"/><text x="530" y="330">Finacle</text></g>
+            <circle id="tpacket" class="t-packet" r="7" cx="-20" cy="-20" fill="currentColor" style="color:#FF9F1C"/>
+          </svg>
+          <p class="caption" id="traceCaption" role="status" aria-live="polite">Choose a scenario to start.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>Systems I've shipped</h2>
+        <p>From my work at Trigent and Infosys for banking clients. Details are kept general to respect client confidentiality.</p>
+      </div>
+
+      <div class="filters" id="filters" role="group" aria-label="Filter projects">
+        <button type="button" data-f="all" aria-pressed="true">All</button>
+        <button type="button" data-f="onboarding" aria-pressed="false">Onboarding</button>
+        <button type="button" data-f="security" aria-pressed="false">Security</button>
+        <button type="button" data-f="payments" aria-pressed="false">Payments</button>
+        <button type="button" data-f="reporting" aria-pressed="false">Reporting</button>
+      </div>
+
+      <div class="projects">
+        <article class="proj reveal">
+          <div class="band"><svg class="wave" data-wave preserveAspectRatio="none" viewBox="0 0 400 62" aria-hidden="true"></svg><b>No. AR-0001</b></div>
+          <div class="body">
+            <h3>Digital account opening</h3>
+            <p class="ep">POST /onboarding/account</p>
+            <p>An end-to-end flow covering OTP verification, KYC, CIF creation and account generation. It checks passports, signatures and selfie liveness through third-party services, and lets customers resume an application without losing data.</p>
+            <div class="metric"><strong>Days to minutes</strong><small>onboarding turnaround, with 30%+ fewer drop-offs</small></div>
+            <p class="stack">Spring Boot, Hibernate / JPA, MySQL, KYC</p>
+          </div>
+        </article>
+
+        <article class="proj reveal" style="--d:.1s">
+          <div class="band"><svg class="wave" data-wave preserveAspectRatio="none" viewBox="0 0 400 62" aria-hidden="true"></svg><b>No. AR-0002</b></div>
+          <div class="body">
+            <h3>OTP delivery and validation</h3>
+            <p class="ep">POST /otp/verify</p>
+            <p>A reliable OTP system with resend logic, attempt limits, cooling periods and automatic disabling after repeated failures. The demo above follows the same rules.</p>
+            <div class="metric"><strong>99% success</strong><small>delivery rate across SMS and email</small></div>
+            <p class="stack">Java, Spring Boot, REST, security</p>
+          </div>
+        </article>
+
+        <article class="proj reveal">
+          <div class="band"><svg class="wave" data-wave preserveAspectRatio="none" viewBox="0 0 400 62" aria-hidden="true"></svg><b>No. AR-0003</b></div>
+          <div class="body">
+            <h3>Cross-bank FD funding</h3>
+            <p class="ep">POST /fd/fund</p>
+            <p>Fixed Deposit funding through third-party payment gateways, protected by JWT authentication, digital signature checks, timestamp validation and replay attack prevention. Payment status services give real-time visibility.</p>
+            <div class="metric"><strong>Real-time transfers</strong><small>across multiple banking channels</small></div>
+            <p class="stack">OAuth2 / JWT, payment gateways, Spring Boot, MySQL</p>
+          </div>
+        </article>
+
+        <article class="proj reveal" style="--d:.1s">
+          <div class="band"><svg class="wave" data-wave preserveAspectRatio="none" viewBox="0 0 400 62" aria-hidden="true"></svg><b>No. AR-0004</b></div>
+          <div class="body">
+            <h3>Card management and reports</h3>
+            <p class="ep">POST /cards/block</p>
+            <p>Card applications, temporary and permanent blocking, lost card masking and automated PIN workflows. I also built JRXML transaction history reports and integrated FEBA and DEH.</p>
+            <div class="metric"><strong>30%+ fewer tickets</strong><small>from automated PIN flows, plus 50% faster statements</small></div>
+            <p class="stack">Spring Boot, JasperReports, FEBA and DEH, Finacle</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal"><h2>Where I've worked</h2></div>
+      <ol class="timeline" id="timeline">
+        <li class="reveal">
+          <span class="when">Oct 2025 to present</span>
+          <h3>Software Engineer</h3>
+          <span class="where">Trigent Software, Delhi (client location)</span>
+          <ul>
+            <li>Built and maintain 12+ secure REST APIs for digital banking and onboarding platforms, supporting 100K+ customer journeys.</li>
+            <li>Designed the Digital Account Opening System, cutting onboarding turnaround from days to minutes.</li>
+            <li>Added session persistence and application recovery, reducing drop-offs by over 30%.</li>
+            <li>Strengthened API security with JWT authentication, digital signature verification, timestamp validation and replay attack prevention.</li>
+            <li>Improved API response times by up to 35% with lazy loading, pagination, SQL query optimization and JPA tuning.</li>
+            <li>Built automated email notifications with JavaMailSender and HTML templates.</li>
+          </ul>
+        </li>
+        <li class="reveal">
+          <span class="when">Jun 2022 to Dec 2023</span>
+          <h3>System Engineer</h3>
+          <span class="where">Infosys, Pune</span>
+          <ul>
+            <li>Developed 16+ REST APIs for card applications, OTP delivery and secure transactions, serving 500K+ customers and reducing manual processing by 60%.</li>
+            <li>Built the OTP system with a 99% SMS and email success rate, plus resend logic, attempt limits and cooling periods.</li>
+            <li>Implemented card blocking and lost card masking to strengthen fraud prevention.</li>
+            <li>Created JRXML transaction reports that cut manual statement generation time by 50%.</li>
+            <li>Integrated FEBA and DEH architecture for backend communication and scalability.</li>
+          </ul>
+        </li>
+        <li class="reveal">
+          <span class="when">2017 to 2021</span>
+          <h3>Bachelor of Engineering (B.E.)</h3>
+          <span class="where">RMD Sinhgad College of Engineering, Pune</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal"><h2>Toolbox</h2></div>
+      <dl class="skills">
+        <div><dt>Languages and frameworks</dt><dd>Java, SQL, Spring Boot, Hibernate / JPA</dd></div>
+        <div><dt>APIs and security</dt><dd>REST API design, OAuth2 / JWT, OTP systems, payment gateway integration</dd></div>
+        <div><dt>Data and cloud</dt><dd>MySQL, RDBMS, AWS</dd></div>
+        <div><dt>Architecture</dt><dd>Microservices, FEBA and DEH integration, Finacle banking platform</dd></div>
+        <div><dt>Tools</dt><dd>Git, Maven, JasperReports (JRXML), Postman</dd></div>
+        <div><dt>Ways of working</dt><dd>Agile, code reviews, production support</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- TERMINAL -->
+  <section id="terminal" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>Ask my terminal</h2>
+        <p>Type a command or tap one below. Start with <b>help</b>. There may be a few hidden ones.</p>
+      </div>
+      <div class="term reveal" id="term">
+        <div class="term-bar"><span>amit@portfolio: ~</span><span>bash</span></div>
+        <div class="term-body" id="termBody" role="log" aria-live="polite" tabindex="0" aria-label="Terminal output"></div>
+        <form class="term-input" id="termForm" autocomplete="off">
+          <label for="termIn">$</label>
+          <input id="termIn" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="type a command">
+          <button class="btn primary" type="submit">Run</button>
+        </form>
+        <div class="chips" id="termChips" aria-label="Quick commands"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="note contact" id="contact">
+    <svg class="ros rosette-bg" data-ros="big" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
+    <div class="wrap inner">
+      <h2>Let's build something secure.</h2>
+      <a class="mail" href="mailto:raundalkar555@gmail.com">raundalkar555@gmail.com</a>
+      <div class="row">
+        <a class="btn primary" href="mailto:raundalkar555@gmail.com">Email me</a>
+        <button class="btn ghost" id="copy" type="button">Copy email address</button>
+        <a class="btn ghost" href="Amit_Raundalkar_resume.docx" download>Download résumé</a>
+      </div>
+      <ul class="links">
+        <li><a href="https://www.linkedin.com/in/amitraundalkar" target="_blank" rel="noopener">LinkedIn</a></li>
+        <li><a href="tel:+917420000331">+91 74200 00331</a></li>
+        <li>Delhi, India</li>
+      </ul>
+      <p class="status" id="copyStatus" role="status"></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="microtext" aria-hidden="true" data-micro></span>
+  <div class="wrap">© 2026 Amit Raundalkar. Built by hand with HTML, CSS and a little JavaScript.</div>
+</footer>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette-box" role="dialog" aria-modal="true" aria-label="Quick menu">
+    <input id="palIn" type="text" placeholder="Type to search: projects, résumé, theme..." aria-label="Search the quick menu" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="palList">
+    <ul id="palList" role="listbox"></ul>
+    <p class="pal-hint">Arrow keys to move, Enter to select, Esc to close.</p>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NS = 'http://www.w3.org/2000/svg';
+
+  /* ---------- Guilloche generators ---------- */
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+  function rosettePath(R, r, d) {
+    var g = gcd(R, r), turns = r / g, lobes = R / g, n = lobes * 16;
+    var k = (R - r) / r, s = 100 / ((R - r) + d), out = '';
+    for (var i = 0; i <= n; i++) {
+      var t = (i / n) * Math.PI * 2 * turns;
+      var x = ((R - r) * Math.cos(t) + d * Math.cos(k * t)) * s;
+      var y = ((R - r) * Math.sin(t) - d * Math.sin(k * t)) * s;
+      out += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    }
+    return out + 'Z';
+  }
+  var PRESETS = {
+    big:   { layers: [{R:72,r:5,d:26},{R:60,r:7,d:20}], copies: 5, step: 1.1, rings: [100, 96, 92] },
+    small: { layers: [{R:72,r:5,d:26}], copies: 3, step: 2, rings: [100] }
+  };
+  var uid = 0;
+  function build(svg) {
+    var p = PRESETS[svg.getAttribute('data-ros')] || PRESETS.small;
+    var defs = document.createElementNS(NS, 'defs'); svg.appendChild(defs);
+    var ids = [];
+    p.layers.forEach(function (L) {
+      var id = 'g' + (uid++);
+      var path = document.createElementNS(NS, 'path');
+      path.setAttribute('id', id); path.setAttribute('d', rosettePath(L.R, L.r, L.d));
+      defs.appendChild(path); ids.push(id);
+    });
+    ids.forEach(function (id, li) {
+      for (var c = 0; c < p.copies; c++) {
+        var u = document.createElementNS(NS, 'use');
+        u.setAttribute('href', '#' + id);
+        u.setAttribute('transform', 'rotate(' + (c * p.step + li * 0.6).toFixed(2) + ')');
+        svg.appendChild(u);
+      }
+    });
+    p.rings.forEach(function (r) {
+      var c = document.createElementNS(NS, 'circle');
+      c.setAttribute('r', r); c.setAttribute('cx', 0); c.setAttribute('cy', 0);
+      svg.appendChild(c);
+    });
+  }
+  document.querySelectorAll('svg[data-ros]').forEach(build);
+
+  document.querySelectorAll('svg[data-wave]').forEach(function (svg, si) {
+    var W = 400, H = 62, lines = 16;
+    for (var i = 0; i < lines; i++) {
+      var d = '';
+      for (var x = 0; x <= W; x += 4) {
+        var env = .3 + .7 * Math.sin(Math.PI * x / W);
+        var y = H / 2 + 24 * env * Math.sin(x * .05 + i * .36 + si) * Math.cos(x * .011 + i * .1);
+        d += (x ? 'L' : 'M') + x + ' ' + y.toFixed(1);
+      }
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d); p.style.animationDelay = (-i * 0.18).toFixed(2) + 's'; svg.appendChild(p);
+    }
+  });
+
+  /* Microtext lines (security-print detail, visible only when zoomed) */
+  document.querySelectorAll('[data-micro]').forEach(function (el) {
+    el.textContent = new Array(60).join('Amit Raundalkar   Java   Spring Boot   Hibernate   MySQL   ');
+  });
+
+  /* ---------- Scroll progress + timeline fill ---------- */
+  var bar = document.getElementById('progress'), tl = document.getElementById('timeline');
+  function onScroll() {
+    var h = document.documentElement;
+    bar.style.transform = 'scaleX(' + (h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight)).toFixed(4) + ')';
+    if (tl) {
+      var r = tl.getBoundingClientRect();
+      tl.style.setProperty('--p', Math.min(1, Math.max(0, (window.innerHeight * 0.7 - r.top) / r.height)).toFixed(3));
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  onScroll();
+
+  /* ---------- Static code sample ---------- */
+  var CODE = [
+    '@Service',
+    'public class OtpService {',
+    '',
+    '    private static final int MAX_ATTEMPTS = 3;',
+    '',
+    '    public OtpResult verify(String mobile, String code) {',
+    '        var otp = repo.findActive(mobile)',
+    '            .orElseThrow(OtpExpired::new);',
+    '',
+    '        if (otp.attempts() >= MAX_ATTEMPTS) {',
+    '            otp.disable();',
+    '            throw new TooManyAttempts();',
+    '        }',
+    '        if (!otp.matches(code)) {',
+    '            otp.recordFailure();',
+    '            return OtpResult.invalid();',
+    '        }',
+    '        otp.consume();',
+    '        return OtpResult.verified();',
+    '    }',
+    '}'
+  ];
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  var re = /(@\w+)|("(?:[^"\\]|\\.)*")|\b(public|private|static|final|class|var|return|new|throw|if)\b|\b([A-Z]\w*)\b/g;
+  document.getElementById('codeBody').innerHTML = CODE.map(function (line) {
+    var out = '', last = 0, m; re.lastIndex = 0;
+    while ((m = re.exec(line))) {
+      out += esc(line.slice(last, m.index));
+      var c = m[1] ? 'ta' : m[2] ? 'ts' : m[3] ? 'tk' : 'tc';
+      out += '<span class="' + c + '">' + esc(m[0]) + '</span>';
+      last = m.index + m[0].length;
+    }
+    return out + esc(line.slice(last));
+  }).join('\n');
+
+  /* ---------- Count-up + reveal ---------- */
+  function countUp(el) {
+    var target = parseFloat(el.dataset.count), suf = el.dataset.suffix || '';
+    if (reduce) { el.textContent = target + suf; return; }
+    var t0 = performance.now(), dur = 1500;
+    (function step(now) {
+      var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = Math.round(target * e) + suf;
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      en.target.classList.add('in');
+      var n = en.target.querySelector('[data-count]');
+      if (n) countUp(n);
+      if (en.target.classList.contains('sec-head')) { var hh = en.target.querySelector('h2'); if (hh) scramble(hh); }
+      io.unobserve(en.target);
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.skills > div').forEach(function (el, i) { el.classList.add('reveal'); el.style.setProperty('--d', (i * .07).toFixed(2) + 's'); });
+  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+  /* ---------- Interactive account-opening demo ---------- */
+  var panes = Array.prototype.slice.call(document.querySelectorAll('.pane'));
+  var stepEls = Array.prototype.slice.call(document.querySelectorAll('#steps li'));
+  var ruleEl = document.getElementById('rule');
+  var RULES = [
+    'First the customer gives a name and mobile number. Every later step is tied to that verified person.',
+    'OTP rules: 3 attempts, a cooling period before resending, and automatic disabling after repeated failures.',
+    'Identity checks run through third-party services: passport validation, signature authentication and selfie liveness.',
+    'The system creates the customer record (CIF) and generates the account. Real onboarding that took days now takes minutes.'
+  ];
+  var nm = document.getElementById('nm'), mb = document.getElementById('mb');
+  var otpBox = document.getElementById('otp');
+  var otpIn = Array.prototype.slice.call(otpBox.querySelectorAll('input'));
+  var otpStatus = document.getElementById('otpStatus');
+  var verifyBtn = document.getElementById('verify'), resendBtn = document.getElementById('resend');
+  var D = { code: '', attempts: 3, cd: 0, cdTimer: null, t0: null, timers: [], interactive: false };
+
+  function clearTimers() { D.timers.forEach(clearTimeout); D.timers = []; clearInterval(D.cdTimer); }
+  function go(n) {
+    panes.forEach(function (p, i) { p.hidden = i !== n; });
+    stepEls.forEach(function (s, i) { s.classList.toggle('active', i === n); s.classList.toggle('done', i < n); });
+    ruleEl.textContent = RULES[n];
+    if (n === 1) { startOtp(); }
+    if (n === 2) { runScan(); }
+    if (n === 3) { showCard(); }
+    if (D.interactive) {
+      setTimeout(function () {
+        if (n === 0) nm.focus();
+        if (n === 1) otpIn[0].focus();
+      }, 60);
+    }
+  }
+  function setStatus(msg, cls) { otpStatus.textContent = msg; otpStatus.className = 'status' + (cls ? ' ' + cls : ''); }
+  function newCode() {
+    D.code = String(1000 + Math.floor(Math.random() * 9000));
+    document.getElementById('codeShow').textContent = D.code;
+  }
+  function lock(on) { otpIn.forEach(function (i) { i.disabled = on; }); verifyBtn.disabled = on; }
+  function startCooldown() {
+    clearInterval(D.cdTimer);
+    D.cd = 15; resendBtn.disabled = true; resendBtn.textContent = 'Resend in 15s';
+    D.cdTimer = setInterval(function () {
+      D.cd--;
+      if (D.cd <= 0) { clearInterval(D.cdTimer); resendBtn.disabled = false; resendBtn.textContent = 'Resend OTP'; }
+      else resendBtn.textContent = 'Resend in ' + D.cd + 's';
+    }, 1000);
+  }
+  function startOtp() {
+    newCode(); D.attempts = 3;
+    otpIn.forEach(function (i) { i.value = ''; });
+    lock(false); setStatus('3 attempts left.'); startCooldown();
+  }
+
+  document.getElementById('send').addEventListener('click', function () {
+    var raw = mb.value.trim() || '+91 98765 43210';
+    document.getElementById('mbShow').textContent = raw.replace(/\d(?=(?:\D*\d){4})/g, '•');
+    D.t0 = performance.now(); D.interactive = true;
+    go(1);
+  });
+  nm.addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('send').click(); });
+
+  otpIn.forEach(function (inp, i) {
+    inp.addEventListener('input', function () {
+      inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
+      if (inp.value && i < 3) otpIn[i + 1].focus();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !inp.value && i > 0) otpIn[i - 1].focus();
+      if (e.key === 'Enter') verifyBtn.click();
+    });
+    inp.addEventListener('paste', function (e) {
+      var t = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
+      if (!t) return;
+      e.preventDefault();
+      otpIn.forEach(function (x, j) { x.value = t[j] || ''; });
+      otpIn[Math.min(t.length, 3)].focus();
+    });
+  });
+  verifyBtn.addEventListener('click', function () {
+    var val = otpIn.map(function (i) { return i.value; }).join('');
+    if (val.length < 4) { setStatus('Enter all 4 digits.', 'err'); return; }
+    if (val === D.code) { setStatus('Verified.', 'good'); D.timers.push(setTimeout(function () { go(2); }, 450)); return; }
+    D.attempts--;
+    otpBox.classList.remove('shake'); void otpBox.offsetWidth; otpBox.classList.add('shake');
+    otpIn.forEach(function (i) { i.value = ''; });
+    if (D.attempts <= 0) {
+      lock(true);
+      setStatus('Too many wrong attempts. This OTP is now disabled. Request a new one when the timer ends.', 'err');
+    } else {
+      setStatus('That code does not match. ' + D.attempts + (D.attempts === 1 ? ' attempt left.' : ' attempts left.'), 'err');
+      otpIn[0].focus();
+    }
+  });
+  resendBtn.addEventListener('click', function () {
+    newCode(); D.attempts = 3;
+    otpIn.forEach(function (i) { i.value = ''; });
+    lock(false); setStatus('New code sent. 3 attempts left.', 'good'); startCooldown(); otpIn[0].focus();
+  });
+  document.getElementById('fill').addEventListener('click', function () {
+    if (otpIn[0].disabled) return;
+    otpIn.forEach(function (x, j) { x.value = D.code[j]; });
+    verifyBtn.focus();
+  });
+
+  function runScan() {
+    var items = Array.prototype.slice.call(document.querySelectorAll('#checks li'));
+    items.forEach(function (li) { li.classList.remove('done'); });
+    var gap = reduce ? 250 : 950;
+    items.forEach(function (li, i) { D.timers.push(setTimeout(function () { li.classList.add('done'); }, gap * (i + 1))); });
+    D.timers.push(setTimeout(function () { go(3); }, gap * items.length + (reduce ? 300 : 800)));
+  }
+
+  function showCard() {
+    var name = nm.value.trim() || 'Your name';
+    document.getElementById('cardName').textContent = name;
+    var cif = '';
+    for (var i = 0; i < 7; i++) cif += Math.floor(Math.random() * 10);
+    document.getElementById('cif').textContent = cif;
+    var wrap = document.getElementById('cardwrap');
+    wrap.classList.remove('show'); void wrap.offsetWidth; wrap.classList.add('show');
+    var acct = document.getElementById('acct'), final = '';
+    for (var j = 0; j < 12; j++) final += Math.floor(Math.random() * 10);
+    var fmt = function (s) { return s.replace(/(.{4})/g, '$1 ').trim(); };
+    if (reduce) { acct.textContent = fmt(final); }
+    else {
+      var start = performance.now();
+      var iv = setInterval(function () {
+        var el = performance.now() - start, s = '';
+        for (var k = 0; k < 12; k++) s += el > 500 + k * 110 ? final[k] : Math.floor(Math.random() * 10);
+        acct.textContent = fmt(s);
+        if (el > 500 + 12 * 110) clearInterval(iv);
+      }, 45);
+    }
+    var secs = Math.max(1, Math.round((performance.now() - D.t0) / 1000));
+    document.getElementById('result').innerHTML = 'Account opened in <strong>' + secs + (secs === 1 ? ' second' : ' seconds') + '</strong>.';
+    if (!reduce) setTimeout(burst, 1000);
+  }
+  document.getElementById('restart').addEventListener('click', function () {
+    clearTimers(); D.t0 = null; D.interactive = true; go(0);
+  });
+
+  /* Card tilt */
+  var cw = document.getElementById('cardwrap'), card = document.getElementById('bankCard');
+  if (!reduce) {
+    cw.addEventListener('pointermove', function (e) {
+      var r = card.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      card.style.transform = 'rotateX(' + ((.5 - py) * 16).toFixed(1) + 'deg) rotateY(' + ((px - .5) * 20).toFixed(1) + 'deg)';
+      card.style.setProperty('--sx', (px * 100) + '%'); card.style.setProperty('--sy', (py * 100) + '%');
+    });
+    cw.addEventListener('pointerleave', function () { card.style.transform = ''; });
+  }
+
+  go(0);
+
+  /* ================= ENGAGEMENT LAYER ================= */
+  var fine = window.matchMedia('(pointer: fine)').matches;
+
+  /* Hoverable letters in the name */
+  (function () {
+    var h1 = document.querySelector('.hero h1');
+    if (!h1) return;
+    h1.setAttribute('aria-label', 'Amit Raundalkar');
+    h1.querySelectorAll('i').forEach(function (i) {
+      var t = i.textContent; i.textContent = ''; i.setAttribute('aria-hidden', 'true');
+      t.split('').forEach(function (ch) {
+        var sp = document.createElement('span'); sp.className = 'ch'; sp.textContent = ch; i.appendChild(sp);
+      });
+    });
+    setTimeout(function () { h1.classList.add('ready'); }, reduce ? 0 : 1800);
+  })();
+
+  /* Typed line in the hero */
+  var typedEl = document.getElementById('typed');
+  var phrases = ['designing secure REST APIs', 'building OTP and KYC flows', 'integrating payment gateways', 'cutting onboarding from days to minutes', 'blocking replay attacks before they land'];
+  if (typedEl) {
+    if (reduce) typedEl.textContent = phrases[0];
+    else {
+      var pi = 0, ci = 0, del = false;
+      (function tick() {
+        var full = phrases[pi]; ci += del ? -1 : 1;
+        typedEl.textContent = full.slice(0, ci);
+        var wait = del ? 26 : 55;
+        if (!del && ci === full.length) { del = true; wait = 1700; }
+        else if (del && ci === 0) { del = false; pi = (pi + 1) % phrases.length; wait = 350; }
+        setTimeout(tick, wait);
+      })();
+    }
+  }
+
+  /* Custom cursor ring */
+  if (fine && !reduce) {
+    var ring = document.getElementById('cursor'), dot = document.getElementById('cursorDot');
+    var mx = 0, my = 0, rx = 0, ry = 0, shown = false;
+    window.addEventListener('pointermove', function (e) {
+      mx = e.clientX; my = e.clientY;
+      if (!shown) { shown = true; rx = mx; ry = my; ring.classList.add('on'); dot.classList.add('on'); }
+      dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+    }, { passive: true });
+    (function loop() {
+      rx += (mx - rx) * .18; ry += (my - ry) * .18;
+      ring.style.transform = 'translate(' + rx.toFixed(1) + 'px,' + ry.toFixed(1) + 'px)';
+      requestAnimationFrame(loop);
+    })();
+    document.addEventListener('pointerover', function (e) {
+      ring.classList.toggle('big', !!(e.target.closest && e.target.closest('a, button, input, .proj, .stat, .t-node, [role=option]')));
+    });
+    document.documentElement.addEventListener('mouseleave', function () { shown = false; ring.classList.remove('on'); dot.classList.remove('on'); });
+  }
+
+  /* Magnetic buttons */
+  if (fine && !reduce) {
+    document.querySelectorAll('.btn, .nav .cv').forEach(function (b) {
+      b.addEventListener('pointermove', function (e) {
+        var r = b.getBoundingClientRect();
+        b.style.translate = ((e.clientX - (r.left + r.width / 2)) * .25).toFixed(1) + 'px ' + ((e.clientY - (r.top + r.height / 2)) * .35).toFixed(1) + 'px';
+      });
+      b.addEventListener('pointerleave', function () { b.style.translate = ''; });
+    });
+  }
+
+  /* 3D tilt with glare on stat panels and project cards */
+  if (fine && !reduce) {
+    document.querySelectorAll('.proj, .stat').forEach(function (el) {
+      el.classList.add('tilt');
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        el.style.transition = 'transform .12s ease-out, translate .25s ease, border-color .25s ease, box-shadow .25s ease';
+        el.style.transform = 'perspective(900px) rotateX(' + ((.5 - py) * 7).toFixed(2) + 'deg) rotateY(' + ((px - .5) * 9).toFixed(2) + 'deg)';
+        el.style.setProperty('--gx', (px * 100).toFixed(1) + '%'); el.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+      });
+      el.addEventListener('pointerleave', function () { el.style.transform = ''; });
+    });
+  }
+
+  /* Hero rosette parallax (mouse + scroll) */
+  var rosBg = document.querySelector('.hero .rosette-bg'), pxo = 0, pyo = 0, pending = false;
+  function paintRos() { pending = false; if (rosBg) rosBg.style.translate = pxo.toFixed(1) + 'px ' + (pyo + window.scrollY * .18).toFixed(1) + 'px'; }
+  function reqRos() { if (!pending) { pending = true; requestAnimationFrame(paintRos); } }
+  if (!reduce) {
+    document.getElementById('hero').addEventListener('pointermove', function (e) {
+      pxo = -(e.clientX / window.innerWidth - .5) * 50; pyo = -(e.clientY / window.innerHeight - .5) * 50; reqRos();
+    });
+    window.addEventListener('scroll', reqRos, { passive: true });
+  }
+
+  /* Decode effect for headings */
+  function scramble(el) {
+    if (reduce || el.dataset.scrambled) return;
+    el.dataset.scrambled = '1';
+    var final = el.textContent, chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%&*+=', n = final.length, start = performance.now(), dur = 1100;
+    el.setAttribute('aria-label', final);
+    el.style.minHeight = el.offsetHeight + 'px';
+    (function frame(now) {
+      if (now - start >= dur) { el.textContent = final; el.style.minHeight = ''; return; }
+      var k = ((now - start) / dur) * (n + 6), out = '';
+      for (var i = 0; i < n; i++) out += (final[i] === ' ' || i < k) ? final[i] : chars[Math.floor(Math.random() * chars.length)];
+      el.textContent = out;
+      requestAnimationFrame(frame);
+    })(start);
+  }
+  var contactH2 = document.querySelector('.contact h2');
+  if (contactH2) {
+    new IntersectionObserver(function (es, o) {
+      es.forEach(function (en) { if (en.isIntersecting) { scramble(contactH2); o.disconnect(); } });
+    }, { threshold: .6 }).observe(contactH2);
+  }
+
+  /* Confetti when the account opens (or when the card is clicked) */
+  var cv = document.getElementById('confetti'), cx = cv.getContext('2d'), parts = [], raf = 0, dpr = window.devicePixelRatio || 1;
+  function sizeCv() { cv.width = window.innerWidth * dpr; cv.height = window.innerHeight * dpr; }
+  window.addEventListener('resize', sizeCv); sizeCv();
+  function burst() {
+    if (reduce) return;
+    var r = document.getElementById('bankCard').getBoundingClientRect();
+    var ox = (r.left + r.width / 2) * dpr, oy = (r.top + r.height / 2) * dpr;
+    var cols = ['#E2B857', '#F3D58A', '#12805A', '#FFFFFF', '#B8892B'];
+    for (var i = 0; i < 90; i++) {
+      var a = Math.random() * Math.PI * 2, v = (4 + Math.random() * 9) * dpr;
+      parts.push({ x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 5 * dpr, s: (4 + Math.random() * 6) * dpr, c: cols[i % cols.length], rot: Math.random() * 6, vr: (Math.random() - .5) * .3, coin: Math.random() < .4, life: 1 });
+    }
+    if (!raf) raf = requestAnimationFrame(drawConfetti);
+  }
+  function drawConfetti() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(function (p) { return p.life > 0 && p.y < cv.height + 40; });
+    parts.forEach(function (p) {
+      p.vy += .32 * dpr; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= .006;
+      cx.save(); cx.globalAlpha = Math.max(0, p.life); cx.translate(p.x, p.y); cx.rotate(p.rot); cx.fillStyle = p.c;
+      if (p.coin) { cx.beginPath(); cx.ellipse(0, 0, p.s / 2, (p.s / 2) * Math.abs(Math.cos(p.rot * 2)) + 1, 0, 0, 6.3); cx.fill(); }
+      else cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+      cx.restore();
+    });
+    if (parts.length) raf = requestAnimationFrame(drawConfetti);
+    else { raf = 0; cx.clearRect(0, 0, cv.width, cv.height); }
+  }
+  document.getElementById('bankCard').addEventListener('click', burst);
+
+  /* Sliding nav underline that follows the section in view */
+  var navEl = document.querySelector('nav[aria-label="Main"]'), ind = document.getElementById('navInd');
+  var navLinks = Array.prototype.slice.call(navEl.querySelectorAll('ul a[href^="#"]'));
+  var activeLink = null;
+  function placeInd(a) {
+    if (!a || !a.offsetWidth) { ind.style.opacity = 0; return; }
+    var nr = navEl.getBoundingClientRect(), r = a.getBoundingClientRect();
+    ind.style.opacity = 1; ind.style.width = r.width + 'px'; ind.style.transform = 'translateX(' + (r.left - nr.left).toFixed(1) + 'px)';
+  }
+  var watcher = new IntersectionObserver(function (es) {
+    es.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      activeLink = navLinks.filter(function (l) { return l.getAttribute('href') === '#' + en.target.id; })[0] || null;
+      navLinks.forEach(function (l) { l.classList.toggle('current', l === activeLink); });
+      placeInd(activeLink);
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  ['hero', 'about', 'trace', 'projects', 'experience', 'skills', 'terminal', 'contact'].forEach(function (id) { var sec = document.getElementById(id); if (sec) watcher.observe(sec); });
+  window.addEventListener('resize', function () { placeInd(activeLink); });
+
+  /* Back-to-top button with progress ring */
+  var totop = document.getElementById('totop'), ringC = totop.querySelector('.prog'), CIRC = 2 * Math.PI * 20;
+  ringC.style.strokeDasharray = CIRC.toFixed(2);
+  function updTop() {
+    var h = document.documentElement, p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+    ringC.style.strokeDashoffset = (CIRC * (1 - p)).toFixed(2);
+    totop.classList.toggle('show', h.scrollTop > 700);
+  }
+  window.addEventListener('scroll', updTop, { passive: true }); updTop();
+  totop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
+
+  /* Stop the "Send OTP" pulse once the visitor engages */
+  var sendBtn = document.getElementById('send');
+  function calm() { sendBtn.classList.remove('pulse'); }
+  sendBtn.addEventListener('click', calm); nm.addEventListener('focus', calm); mb.addEventListener('focus', calm);
+
+  /* ================= v4: MORE INTERACTIVE ================= */
+  var EMAIL = 'raundalkar555@gmail.com';
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.classList.remove('show'); }, 4200);
+  }
+  function dlResume() {
+    var a = document.createElement('a'); a.href = 'Amit_Raundalkar_resume.docx'; a.download = '';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function jump(id) { var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }
+
+  /* ---------- Theme toggle with circular reveal ---------- */
+  var root = document.documentElement, themeBtn = document.getElementById('theme');
+  function sysTheme() { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+  function applyTheme(t, save) {
+    root.setAttribute('data-theme', t);
+    themeBtn.setAttribute('aria-label', t === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+    if (save) { try { localStorage.setItem('theme', t); } catch (e) {} }
+  }
+  applyTheme(root.getAttribute('data-theme') || sysTheme(), false);
+  function toggleTheme() {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    if (document.startViewTransition && !reduce) {
+      var r = themeBtn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+      var vt = document.startViewTransition(function () { applyTheme(next, true); });
+      vt.ready.then(function () {
+        root.animate({ clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + rad + 'px at ' + x + 'px ' + y + 'px)'] },
+          { duration: 700, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' });
+      }).catch(function () {});
+    } else applyTheme(next, true);
+  }
+  themeBtn.addEventListener('click', toggleTheme);
+
+  /* ---------- Hero: gold dust network that reacts to the cursor ---------- */
+  var heroEl = document.getElementById('hero');
+  var spot = document.getElementById('spot');
+  var dust = document.getElementById('dust'), dx = dust.getContext('2d');
+  var P = [], dW = 0, dH = 0, mouse = { x: -999, y: -999 }, dustOn = false, dustRaf = 0;
+  function dustResize() {
+    var r = heroEl.getBoundingClientRect();
+    dW = r.width; dH = r.height; dust.width = dW * dpr; dust.height = dH * dpr;
+    dx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var n = Math.min(80, Math.round(dW / 16)); P = [];
+    for (var i = 0; i < n; i++) {
+      var bx = (Math.random() - .5) * .3, by = (Math.random() - .5) * .3;
+      P.push({ x: Math.random() * dW, y: Math.random() * dH, vx: bx, vy: by, bx: bx, by: by, r: 1 + Math.random() * 1.6, a: (.25 + Math.random() * .5).toFixed(2) });
+    }
+  }
+  function dustFrame() {
+    if (!dustOn) { dustRaf = 0; return; }
+    dx.clearRect(0, 0, dW, dH);
+    var i, j, p, q;
+    for (i = 0; i < P.length; i++) {
+      p = P[i];
+      var ex = p.x - mouse.x, ey = p.y - mouse.y, d2 = ex * ex + ey * ey;
+      if (d2 < 12100 && d2 > 0) { var d = Math.sqrt(d2), f = (110 - d) / 110; p.vx += (ex / d) * f * .6; p.vy += (ey / d) * f * .6; }
+      p.vx += (p.bx - p.vx) * .02; p.vy += (p.by - p.vy) * .02;
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10) p.x = dW + 10; else if (p.x > dW + 10) p.x = -10;
+      if (p.y < -10) p.y = dH + 10; else if (p.y > dH + 10) p.y = -10;
+    }
+    dx.lineWidth = 1;
+    for (i = 0; i < P.length; i++) {
+      p = P[i];
+      for (j = i + 1; j < P.length; j++) {
+        q = P[j]; var ax = p.x - q.x, ay = p.y - q.y, dd = ax * ax + ay * ay;
+        if (dd < 8100) { dx.strokeStyle = 'rgba(226,184,87,' + (.18 * (1 - dd / 8100)).toFixed(3) + ')'; dx.beginPath(); dx.moveTo(p.x, p.y); dx.lineTo(q.x, q.y); dx.stroke(); }
+      }
+      var mxd = p.x - mouse.x, myd = p.y - mouse.y, md = mxd * mxd + myd * myd;
+      if (md < 22500) { dx.strokeStyle = 'rgba(226,184,87,' + (.55 * (1 - md / 22500)).toFixed(3) + ')'; dx.beginPath(); dx.moveTo(p.x, p.y); dx.lineTo(mouse.x, mouse.y); dx.stroke(); }
+      dx.fillStyle = 'rgba(226,184,87,' + p.a + ')'; dx.beginPath(); dx.arc(p.x, p.y, p.r, 0, 6.283); dx.fill();
+    }
+    dustRaf = requestAnimationFrame(dustFrame);
+  }
+  if (!reduce) {
+    dustResize();
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () {
+        var r = heroEl.getBoundingClientRect();
+        if (Math.abs(r.width - dW) > 20 || Math.abs(r.height - dH) > 20) dustResize();
+      }).observe(heroEl);
+    } else window.addEventListener('resize', dustResize);
+    new IntersectionObserver(function (es) {
+      dustOn = es[0].isIntersecting;
+      if (dustOn && !dustRaf) dustRaf = requestAnimationFrame(dustFrame);
+    }).observe(heroEl);
+    heroEl.addEventListener('pointermove', function (e) {
+      var r = heroEl.getBoundingClientRect();
+      mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+      spot.style.setProperty('--sx', mouse.x + 'px'); spot.style.setProperty('--sy', mouse.y + 'px');
+    });
+    heroEl.addEventListener('pointerleave', function () { mouse.x = -999; mouse.y = -999; });
+  }
+
+  /* ---------- Click ripple ---------- */
+  if (!reduce) {
+    document.addEventListener('pointerdown', function (e) {
+      var rp = document.createElement('div'); rp.className = 'ripple';
+      rp.style.left = e.clientX + 'px'; rp.style.top = e.clientY + 'px';
+      document.body.appendChild(rp);
+      rp.addEventListener('animationend', function () { rp.remove(); });
+    });
+  }
+
+  /* ---------- Confetti rain (Konami code, hire command) ---------- */
+  function rain() {
+    if (reduce) return;
+    var cols = ['#E2B857', '#F3D58A', '#12805A', '#FFFFFF', '#B8892B'];
+    for (var i = 0; i < 160; i++) {
+      parts.push({ x: Math.random() * cv.width, y: -Math.random() * 120 * dpr, vx: (Math.random() - .5) * 2 * dpr, vy: (1 + Math.random() * 3) * dpr, s: (4 + Math.random() * 6) * dpr, c: cols[i % cols.length], rot: Math.random() * 6, vr: (Math.random() - .5) * .3, coin: Math.random() < .4, life: 1.5 });
+    }
+    if (!raf) raf = requestAnimationFrame(drawConfetti);
+  }
+  var KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'], kpos = 0;
+  document.addEventListener('keydown', function (e) {
+    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    kpos = (k === KON[kpos]) ? kpos + 1 : (k === KON[0] ? 1 : 0);
+    if (kpos === KON.length) { kpos = 0; rain(); toast('Konami code unlocked. Thanks for exploring. Want to talk?'); }
+  });
+
+  /* ---------- Request tracer ---------- */
+  var FLOWS = {
+    account: { title: 'POST /onboarding/kyc', status: 200, ms: '41 ms', done: 'The customer moves to the next step, and their progress is saved in case they come back later.', steps: [
+      ['te-cg', 1, 'The client sends the customer\'s KYC details over HTTPS.'],
+      ['te-ga', 1, 'The gateway asks Auth to validate the JWT.'],
+      ['te-ga', 0, 'The token is valid, so the request continues.'],
+      ['te-go', 1, 'The banking API checks the passport and signature results.'],
+      ['te-od', 1, 'Progress is saved in MySQL so the application can be resumed.'],
+      ['te-od', 0, 'MySQL confirms the save.'],
+      ['te-go', 0, 'The banking API builds the response.'],
+      ['te-cg', 0, '200 OK reaches the client.']
+    ] },
+    otp: { title: 'POST /otp/verify', status: 200, ms: '17 ms', done: 'The OTP is marked as used. After 3 wrong attempts it would be disabled instead.', steps: [
+      ['te-cg', 1, 'The client sends the 4-digit code.'],
+      ['te-ga', 1, 'The gateway validates the token with Auth.'],
+      ['te-ga', 0, 'Token accepted.'],
+      ['te-go', 1, 'The banking API checks the code, its expiry and the attempt count.'],
+      ['te-od', 1, 'The result of the attempt is written to MySQL.'],
+      ['te-od', 0, 'Saved.'],
+      ['te-go', 0, 'The API replies that the code is valid.'],
+      ['te-cg', 0, '200 OK reaches the client.']
+    ] },
+    fund: { title: 'POST /fd/fund', status: 200, ms: '86 ms', done: 'Money moved across banks in real time, and the payment status can be tracked.', steps: [
+      ['te-cg', 1, 'The client asks to fund a Fixed Deposit from another bank.'],
+      ['te-ga', 1, 'The gateway sends the request to Auth.'],
+      ['te-ga', 0, 'The JWT, digital signature and timestamp all check out.'],
+      ['te-go', 1, 'The banking API prepares the transfer instruction.'],
+      ['te-ok', 1, 'The payment gateway receives the instruction.'],
+      ['te-kw', 1, 'The payment gateway passes it to the core banking platform, Finacle.'],
+      ['te-kw', 0, 'Finacle confirms the funds moved.'],
+      ['te-ok', 0, 'The payment gateway reports success.'],
+      ['te-od', 1, 'The transaction is recorded in MySQL for tracking.'],
+      ['te-od', 0, 'Recorded.'],
+      ['te-go', 0, 'The banking API builds the response.'],
+      ['te-cg', 0, '200 OK with the payment status reaches the client.']
+    ] },
+    replay: { title: 'POST /fd/fund (replayed)', status: 401, ms: '6 ms', bad: true, done: 'Nothing reached the payment systems. Timestamp validation and replay prevention stop this kind of attack.', steps: [
+      ['te-cg', 1, 'An attacker resends a request captured earlier.'],
+      ['te-ga', 1, 'The gateway forwards it to Auth.'],
+      ['te-ga', 0, 'The request is too old to be valid, so Auth rejects it as a replay.', true],
+      ['te-cg', 0, '401 Unauthorized. The attack stops at the gateway.', true]
+    ] }
+  };
+  var T_EDGES = { 'te-cg': ['tn-c', 'tn-g'], 'te-ga': ['tn-g', 'tn-a'], 'te-go': ['tn-g', 'tn-o'], 'te-od': ['tn-o', 'tn-d'], 'te-ok': ['tn-o', 'tn-k'], 'te-kw': ['tn-k', 'tn-w'] };
+  var NODE_INFO = {
+    'tn-c': 'Client: a mobile app or browser. It only ever talks to the gateway.',
+    'tn-g': 'Gateway: the single door into the system. It routes each request to the right service.',
+    'tn-a': 'Auth: checks JWTs, digital signatures and timestamps, and blocks replayed requests.',
+    'tn-o': 'Banking API: the Spring Boot service with the business logic for KYC, OTP and funding.',
+    'tn-d': 'MySQL: stores customers, applications and progress through Hibernate / JPA.',
+    'tn-k': 'Payment gateway: a third-party service that moves money between banks.',
+    'tn-w': 'Finacle: the core banking platform that holds the accounts.'
+  };
+  var tPacket = document.getElementById('tpacket'), tCap = document.getElementById('traceCaption'), tStat = document.getElementById('traceStatus');
+  var tRunId = 0, tCur = 'account', scenBtns = Array.prototype.slice.call(document.querySelectorAll('#scen button[data-flow]'));
+  function tPulse(id) { var n = document.getElementById(id); n.classList.add('hit'); setTimeout(function () { n.classList.remove('hit'); }, 320); }
+  function tMove(edgeId, fwd, bad) {
+    return new Promise(function (resolve) {
+      var path = document.getElementById(edgeId);
+      if (reduce) { tPulse(T_EDGES[edgeId][fwd ? 1 : 0]); setTimeout(resolve, 450); return; }
+      var len = path.getTotalLength(), dur = 520, t0 = performance.now();
+      tPacket.style.color = bad ? '#FF5D73' : (fwd ? '#FF9F1C' : '#4CC9F0');
+      (function frame(now) {
+        var k = Math.min(1, (now - t0) / dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        var pt = path.getPointAtLength(len * (fwd ? e : 1 - e));
+        tPacket.setAttribute('cx', pt.x); tPacket.setAttribute('cy', pt.y);
+        if (k < 1) requestAnimationFrame(frame); else { tPulse(T_EDGES[edgeId][fwd ? 1 : 0]); resolve(); }
+      })(t0);
+    });
+  }
+  async function runTrace(key) {
+    var f = FLOWS[key], id = ++tRunId; tCur = key;
+    scenBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.flow === key ? 'true' : 'false'); });
+    tStat.className = ''; tStat.textContent = f.title + '  running...';
+    for (var i = 0; i < f.steps.length; i++) {
+      var st = f.steps[i];
+      tCap.className = 'caption' + (st[3] ? ' bad' : '');
+      tCap.innerHTML = '<b>Step ' + (i + 1) + ' of ' + f.steps.length + '.</b> ' + esc(st[2]);
+      await tMove(st[0], !!st[1], !!st[3]);
+      if (id !== tRunId) return;
+      await sleep(reduce ? 0 : 120);
+      if (id !== tRunId) return;
+    }
+    tPacket.setAttribute('cx', -20); tPacket.setAttribute('cy', -20);
+    tCap.className = 'caption' + (f.bad ? ' bad' : '');
+    tCap.innerHTML = '<b>' + (f.bad ? 'Blocked.' : 'Done.') + '</b> ' + esc(f.done);
+    tStat.className = f.bad ? 'err' : 'good';
+    tStat.textContent = f.title + '  ' + f.status + ' in ' + f.ms;
+  }
+  scenBtns.forEach(function (b) { b.addEventListener('click', function () { runTrace(b.dataset.flow); }); });
+  document.getElementById('traceRun').addEventListener('click', function () { runTrace(tCur); });
+  Array.prototype.forEach.call(document.querySelectorAll('.t-node'), function (g) {
+    function show() {
+      tRunId++; tPacket.setAttribute('cx', -20); tPacket.setAttribute('cy', -20);
+      tCap.className = 'caption'; tCap.textContent = NODE_INFO[g.id]; tPulse(g.id);
+    }
+    g.addEventListener('click', show);
+    g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(); } });
+  });
+  var autoRan = false;
+  new IntersectionObserver(function (es, o) {
+    es.forEach(function (en) { if (en.isIntersecting && !autoRan) { autoRan = true; o.disconnect(); setTimeout(function () { runTrace('account'); }, 500); } });
+  }, { threshold: .45 }).observe(document.getElementById('traceBox'));
+
+  /* ---------- Project filters ---------- */
+  var TAGS = ['onboarding security', 'security onboarding', 'payments security', 'reporting security'];
+  var projEls = Array.prototype.slice.call(document.querySelectorAll('.proj'));
+  projEls.forEach(function (el, i) { el.dataset.tags = TAGS[i] || ''; });
+  var filterBtns = Array.prototype.slice.call(document.querySelectorAll('#filters button'));
+  filterBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.dataset.f;
+      filterBtns.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      projEls.forEach(function (el) { el.classList.toggle('dim', f !== 'all' && el.dataset.tags.split(' ').indexOf(f) < 0); });
+    });
+  });
+
+  /* ---------- Experience accordion ---------- */
+  document.querySelectorAll('.timeline > li').forEach(function (li, idx) {
+    var ul = li.querySelector('ul'); if (!ul) return;
+    var box = document.createElement('div'); box.className = 'collapse'; box.id = 'role-' + idx;
+    var inner = document.createElement('div'); inner.className = 'inner';
+    ul.parentNode.insertBefore(box, ul); inner.appendChild(ul); box.appendChild(inner);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'toggle'; b.setAttribute('aria-controls', box.id);
+    function setOpen(open) { box.classList.toggle('open', open); b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.textContent = open ? 'Hide details' : 'Show details'; }
+    setOpen(idx === 0);
+    b.addEventListener('click', function () { setOpen(!box.classList.contains('open')); setTimeout(onScroll, 500); });
+    li.insertBefore(b, box);
+  });
+
+  /* ---------- Copy code ---------- */
+  document.getElementById('copyCode').addEventListener('click', function () {
+    var b = this;
+    function done(t) { b.textContent = t; setTimeout(function () { b.textContent = 'Copy'; }, 1600); }
+    if (navigator.clipboard) navigator.clipboard.writeText(CODE.join('\n')).then(function () { done('Copied'); }, function () { done('Failed'); });
+    else done('Failed');
+  });
+
+  /* ---------- Terminal ---------- */
+  var tb = document.getElementById('termBody'), tIn = document.getElementById('termIn'), tForm = document.getElementById('termForm');
+  var hist = [], hpos = 0, busy = false;
+  function tline(html, cls) {
+    var d = document.createElement('div'); d.className = 'tl' + (cls ? ' ' + cls : ''); d.innerHTML = html;
+    tb.appendChild(d); tb.scrollTop = tb.scrollHeight;
+  }
+  function printLines(arr) {
+    var i = 0; busy = true;
+    (function next() {
+      if (i >= arr.length) { busy = false; return; }
+      var l = arr[i++]; tline(l[0], l[1]);
+      setTimeout(next, reduce ? 0 : 55);
+    })();
+  }
+  var CMDS = {
+    help: function () { return [
+      ['Available commands:', 'th'],
+      ['  help         show this list'], ['  whoami       who I am'], ['  about        a short summary'],
+      ['  skills       my toolbox'], ['  projects     systems I have shipped'], ['  experience   where I have worked'],
+      ['  education    degree and certifications'], ['  contact      how to reach me'], ['  resume       download my résumé'],
+      ['  hire         see what happens'], ['  theme        switch light and dark'], ['  clear        clear the screen']
+    ]; },
+    whoami: function () { return [['Amit Raundalkar', 'th'], ['Java backend developer for digital banking. Based in Delhi, India.']]; },
+    about: function () { return [
+      ['I build secure, high-throughput REST APIs for banking.', 'th'],
+      ['Onboarding systems, payment integrations and OTP and authentication'], ['services for 500K+ customers, using Java, Spring Boot, Hibernate / JPA and MySQL.']
+    ]; },
+    skills: function () { return [
+      ['Languages     Java, SQL'], ['Frameworks    Spring Boot, Hibernate / JPA'], ['APIs          REST, OAuth2 / JWT, OTP, payment gateways'],
+      ['Data / cloud  MySQL, RDBMS, AWS'], ['Architecture  Microservices, FEBA &amp; DEH, Finacle'], ['Tools         Git, Maven, JasperReports, Postman, Agile']
+    ]; },
+    projects: function () { return [
+      ['Systems I have shipped:', 'th'],
+      ['AR-0001  Digital account opening      days to minutes'], ['AR-0002  OTP delivery and validation  99% success'],
+      ['AR-0003  Cross-bank FD funding        real-time transfers'], ['AR-0004  Card management and reports  30%+ fewer tickets'],
+      ['Details are in the <a href="#projects">Projects</a> section.']
+    ]; },
+    experience: function () { return [
+      ['Software Engineer, Trigent Software (Oct 2025 to present)', 'th'],
+      ['  12+ secure REST APIs, 100K+ customer journeys'], ['  Digital Account Opening: days to minutes, 30%+ fewer drop-offs'],
+      ['System Engineer, Infosys (Jun 2022 to Dec 2023)', 'th'],
+      ['  16+ REST APIs, 500K+ customers, 60% less manual processing'], ['  OTP system with 99% delivery success']
+    ]; },
+    education: function () { return [
+      ['B.E., RMD Sinhgad College of Engineering, Pune (2017 to 2021)', 'th'],
+      ['  Infosys Certified Java SE8 Developer'], ['  Infosys Certified Spring Associate']
+    ]; },
+    contact: function () { return [
+      ['Let us talk:', 'th'],
+      ['  Email     <a href="mailto:' + EMAIL + '">' + EMAIL + '</a>'],
+      ['  LinkedIn  <a href="https://www.linkedin.com/in/amitraundalkar" target="_blank" rel="noopener">linkedin.com/in/amitraundalkar</a>'],
+      ['  Phone     <a href="tel:+917420000331">+91 74200 00331</a>']
+    ]; },
+    resume: function () { dlResume(); return [['Downloading Amit_Raundalkar_resume.docx ...', 'th']]; },
+    hire: function () { rain(); return [['Great choice.', 'th'], ['Email me at <a href="mailto:' + EMAIL + '">' + EMAIL + '</a>'], ['Or press Ctrl+K and pick "Email Amit".']]; },
+    theme: function () { toggleTheme(); return [['Theme switched.']]; },
+    ls: function () { return [['projects/   skills.txt   resume.docx   contact.md']]; },
+    _sudo: function () { rain(); return [['[sudo] password for recruiter: ********'], ['Access granted. Amit has been added to your shortlist.', 'th']]; }
+  };
+  CMDS['cat skills.txt'] = CMDS.skills;
+  function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function runCmd(raw) {
+    var cmd = raw.trim(); if (!cmd || busy) return;
+    hist.push(cmd); hpos = hist.length;
+    var echo = document.createElement('div'); echo.className = 'tl';
+    echo.innerHTML = '<span class="pr">$</span> '; echo.appendChild(document.createTextNode(cmd)); tb.appendChild(echo);
+    var key = cmd.toLowerCase().replace(/\s+/g, ' ');
+    if (key === 'clear') { tb.innerHTML = ''; return; }
+    var out;
+    if (key === 'sudo hire amit' || key === 'sudo hire') out = CMDS._sudo();
+    else if (key.charAt(0) !== '_' && has(CMDS, key)) out = CMDS[key]();
+    else out = [['command not found: ' + esc(cmd) + '. Type <b>help</b> to see what I can do.', 'terr']];
+    printLines(out);
+  }
+  tForm.addEventListener('submit', function (e) { e.preventDefault(); var v = tIn.value; tIn.value = ''; runCmd(v); });
+  tIn.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowUp') { e.preventDefault(); if (hpos > 0) tIn.value = hist[--hpos]; }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); tIn.value = hpos < hist.length - 1 ? hist[++hpos] : (hpos = hist.length, ''); }
+    else if (e.key === 'Tab') {
+      var v = tIn.value.toLowerCase(); if (!v) return; e.preventDefault();
+      var m = Object.keys(CMDS).filter(function (k) { return k.charAt(0) !== '_' && k.indexOf(v) === 0; });
+      if (m.length === 1) tIn.value = m[0];
+    }
+  });
+  var chipBox = document.getElementById('termChips');
+  ['help', 'projects', 'skills', 'experience', 'contact', 'resume', 'hire'].forEach(function (c) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = c;
+    b.addEventListener('click', function () { runCmd(c); });
+    chipBox.appendChild(b);
+  });
+  var greeted = false;
+  new IntersectionObserver(function (es, o) {
+    es.forEach(function (en) {
+      if (en.isIntersecting && !greeted) {
+        greeted = true; o.disconnect();
+        printLines([['Welcome. I am Amit, a Java backend developer.', 'th'], ['Type <b>help</b> or tap a command below.']]);
+      }
+    });
+  }, { threshold: .3 }).observe(document.getElementById('term'));
+
+  /* ---------- Quick menu (Ctrl K or /) ---------- */
+  var pal = document.getElementById('palette'), palIn = document.getElementById('palIn'), palList = document.getElementById('palList');
+  var palSel = 0, palItems = [], lastFocus = null;
+  var ACTIONS = [
+    { t: 'Go to About', k: 'intro summary', run: function () { jump('about'); } },
+    { t: 'Go to Request tracer', k: 'trace diagram flow', run: function () { jump('trace'); } },
+    { t: 'Go to Projects', k: 'work shipped', run: function () { jump('projects'); } },
+    { t: 'Go to Experience', k: 'jobs timeline', run: function () { jump('experience'); } },
+    { t: 'Go to Toolbox', k: 'skills tools', run: function () { jump('skills'); } },
+    { t: 'Go to Terminal', k: 'commands console', run: function () { jump('terminal'); } },
+    { t: 'Go to Contact', k: 'email reach', run: function () { jump('contact'); } },
+    { t: 'Download résumé', k: 'cv resume docx', run: dlResume },
+    { t: 'Email Amit', k: 'mail contact hire', run: function () { window.location.href = 'mailto:' + EMAIL; } },
+    { t: 'Open LinkedIn', k: 'profile social', run: function () { window.open('https://www.linkedin.com/in/amitraundalkar', '_blank', 'noopener'); } },
+    { t: 'Switch theme', k: 'dark light mode', run: toggleTheme },
+    { t: 'Celebrate with confetti', k: 'party fun', run: rain }
+  ];
+  function palMark() {
+    Array.prototype.forEach.call(palList.children, function (li, i) { li.setAttribute('aria-selected', i === palSel ? 'true' : 'false'); });
+    palIn.setAttribute('aria-activedescendant', palItems.length ? 'pal' + palSel : '');
+  }
+  function palRender() {
+    var q = palIn.value.trim().toLowerCase();
+    palItems = ACTIONS.filter(function (a) { return !q || (a.t + ' ' + (a.k || '')).toLowerCase().indexOf(q) > -1; });
+    palSel = Math.min(palSel, Math.max(0, palItems.length - 1));
+    palList.innerHTML = '';
+    palItems.forEach(function (a, i) {
+      var li = document.createElement('li'); li.id = 'pal' + i; li.setAttribute('role', 'option'); li.textContent = a.t;
+      li.addEventListener('click', function () { palRun(i); });
+      li.addEventListener('pointermove', function () { if (palSel !== i) { palSel = i; palMark(); } });
+      palList.appendChild(li);
+    });
+    if (!palItems.length) { var n = document.createElement('li'); n.className = 'none'; n.textContent = 'No matches'; palList.appendChild(n); }
+    palMark();
+  }
+  function palOpen() { lastFocus = document.activeElement; pal.hidden = false; palIn.value = ''; palSel = 0; palRender(); palIn.focus(); document.body.style.overflow = 'hidden'; }
+  function palClose() { pal.hidden = true; document.body.style.overflow = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+  function palRun(i) { var a = palItems[i]; palClose(); if (a) setTimeout(a.run, 80); }
+  palIn.addEventListener('input', function () { palSel = 0; palRender(); });
+  palIn.addEventListener('keydown', function (e) {
+    var n = Math.max(1, palItems.length);
+    if (e.key === 'ArrowDown') { e.preventDefault(); palSel = (palSel + 1) % n; palMark(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = (palSel - 1 + n) % n; palMark(); }
+    else if (e.key === 'Enter') { e.preventDefault(); palRun(palSel); }
+    else if (e.key === 'Escape') { palClose(); }
+    else if (e.key === 'Tab') { e.preventDefault(); }
+  });
+  pal.addEventListener('click', function (e) { if (e.target === pal) palClose(); });
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (pal.hidden) palOpen(); else palClose(); }
+    else if (e.key === '/' && pal.hidden && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) { e.preventDefault(); palOpen(); }
+  });
+  document.getElementById('paletteBtn').addEventListener('click', palOpen);
+  if (/Mac|iPhone|iPad/.test(navigator.platform)) document.querySelector('.kbd kbd').textContent = '⌘ K';
+
+  /* ---------- Copy email ---------- */
+  var statusEl = document.getElementById('copyStatus');
+  document.getElementById('copy').addEventListener('click', function () {
+    var email = 'raundalkar555@gmail.com';
+    function done(ok) { statusEl.textContent = ok ? 'Copied ' + email + ' to your clipboard.' : 'Copy failed. Email me at ' + email; }
+    if (navigator.clipboard) navigator.clipboard.writeText(email).then(function () { done(true); }, function () { done(false); });
+    else done(false);
+  });
+})();
+</script>
+</body>
+</html>
