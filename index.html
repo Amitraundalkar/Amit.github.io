@@ -6,6 +6,7 @@
 <title>Amit Raundalkar – Java backend developer for digital banking</title>
 <meta name="description" content="Amit Raundalkar builds secure onboarding, OTP and payment services in Java and Spring Boot for digital banking. Try a live demo of an account-opening flow.">
 <script>try{var __t=localStorage.getItem("theme");if(__t)document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
+<script>try{var __r=matchMedia("(prefers-reduced-motion: reduce)").matches,__m=null;try{__m=localStorage.getItem("motion")}catch(e){}if(__r&&__m!=="on")document.documentElement.classList.add("rm")}catch(e){}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B3A2C'/%3E%3Ctext x='32' y='42' font-size='28' font-family='Arial' font-weight='700' text-anchor='middle' fill='%23E2B857'%3EAR%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -269,7 +270,6 @@
   .cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--gold); transition: opacity .3s; }
   .cursor.on, .cursor-dot.on { opacity: 1; }
   .cursor.big { width: 66px; height: 66px; margin: -33px 0 0 -33px; background: color-mix(in srgb, var(--gold) 16%, transparent); }
-  @media (pointer: coarse) { .cursor, .cursor-dot { display: none; } }
   #confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 90; }
 
   .hero .typed { margin: 1.1rem 0 0; font-family: var(--mono); font-size: .95rem; color: var(--gold); min-height: 1.6em; opacity: 0; animation: fade .8s ease 1.3s forwards; }
@@ -286,7 +286,7 @@
   .nav ul a.current { color: var(--text); }
 
   .tilt::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(260px circle at var(--gx, 50%) var(--gy, 0%), color-mix(in srgb, var(--gold) 24%, transparent), transparent 65%); }
-  .tilt:hover::after { opacity: 1; }
+  .tilt:hover::after, .tilt.glow::after { opacity: 1; }
 
   .wave path { transform-origin: 200px 31px; animation: breathe 2.8s ease-in-out infinite alternate; animation-play-state: paused; }
   .proj:hover .wave path { animation-play-state: running; }
@@ -329,7 +329,12 @@
   .kbd:hover { border-color: var(--gold); color: var(--text); }
   .kbd kbd { font-family: var(--mono); font-size: .75rem; padding: .05rem .4rem; border-radius: 5px; background: var(--surface); border: 1px solid var(--line); color: var(--text); }
   @media (max-width: 1000px) { .kbd .lbl { display: none; } }
-  @media (max-width: 720px) { .kbd { display: none; } }
+  @media (max-width: 720px) {
+    .kbd { display: inline-flex; padding: .3rem .7rem; }
+    .kbd .lbl { display: inline; }
+    .kbd kbd { display: none; }
+    .nav ul { gap: .7rem; }
+  }
 
   .toast { position: fixed; left: 50%; bottom: 1.4rem; transform: translate(-50%, 20px); background: #0B3A2C; color: #F1F6EC; border: 1px solid #E2B857; padding: .8rem 1.2rem; border-radius: 12px; opacity: 0; pointer-events: none; transition: opacity .35s, transform .35s; z-index: 120; max-width: 90vw; text-align: center; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -411,30 +416,39 @@
   .chips button { font: inherit; font-size: .8rem; color: #E9F3E4; background: #0B3A2C; border: 1px solid #2A5C49; border-radius: 999px; padding: .3rem .8rem; cursor: pointer; transition: border-color .2s, background .2s; }
   .chips button:hover { border-color: #E2B857; background: #124634; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .ripple { display: none; }
-    .dust, .spot { display: none; }
-    .collapse, .toast, .theme, .scen button, .palette-box { transition: none; animation: none; }
-  }
+  /* reduced motion: applied via class so visitors can opt in to animations */
+  html.rm .ripple { display: none; }
+  html.rm .dust, html.rm .spot { display: none; }
+  html.rm .collapse, html.rm .toast, html.rm .theme, html.rm .scen button, html.rm .palette-box { transition: none; animation: none; }
+
+
+
+  /* ===== v5: mobile + motion switch ===== */
+  .motionbtn { position: fixed; left: 1rem; bottom: 1rem; z-index: 55; max-width: calc(100vw - 6rem); font: inherit; font-size: .82rem; font-weight: 600; color: #F1F6EC; background: #0B3A2C; border: 1px solid #E2B857; border-radius: 999px; padding: .55rem 1rem; cursor: pointer; box-shadow: 0 10px 24px -8px rgba(0,0,0,.5); }
+  .motionbtn[hidden] { display: none; }
+  .hero h1 .ch.pop { animation: chPop .55s cubic-bezier(.2,.8,.2,1); color: var(--gold); }
+  @keyframes chPop { 40% { transform: translateY(-14px) rotate(-6deg); } }
+  .proj.live .wave path { animation-play-state: running; }
+  .stat:active, .proj:active { scale: .985; }
 
   .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; transition-delay: var(--d, 0s); }
   .reveal.in { opacity: 1; transform: none; }
 
-  @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .hero .rosette-bg { animation: none; opacity: .5; }
-    .hero h1 .l i { animation: none; transform: none; }
-    .hero .role, .hero .lead, .hero .cta, .demo { animation: none; opacity: 1; }
-    .reveal { opacity: 1; transform: none; transition: none; }
-    .scan .line { animation: none; top: 50%; }
-    .cardwrap.show { animation: none; }
-    .otp.shake { animation: none; }
-    .btn, .proj { transition: none; }
-    .hero .typed { animation: none; opacity: 1; }
-    .caret, .btn.pulse, .wave path, .timeline > li.in:first-child::before { animation: none; }
-    .totop, .nav-ind, .sec-head h2::after { transition: none; }
-    .hero h1 .ch { transition: none; }
-  }
+  /* reduced motion: applied via class so visitors can opt in to animations */
+  html.rm { scroll-behavior: auto; }
+  html.rm .hero .rosette-bg { animation: none; opacity: .5; }
+  html.rm .hero h1 .l i { animation: none; transform: none; }
+  html.rm .hero .role, html.rm .hero .lead, html.rm .hero .cta, html.rm .demo { animation: none; opacity: 1; }
+  html.rm .reveal { opacity: 1; transform: none; transition: none; }
+  html.rm .scan .line { animation: none; top: 50%; }
+  html.rm .cardwrap.show { animation: none; }
+  html.rm .otp.shake { animation: none; }
+  html.rm .btn, html.rm .proj { transition: none; }
+  html.rm .hero .typed { animation: none; opacity: 1; }
+  html.rm .caret, html.rm .btn.pulse, html.rm .wave path, html.rm .timeline > li.in:first-child::before { animation: none; }
+  html.rm .totop, html.rm .nav-ind, html.rm .sec-head h2::after { transition: none; }
+  html.rm .hero h1 .ch { transition: none; }
+
 </style>
 </head>
 <body>
@@ -818,10 +832,15 @@
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<button class="motionbtn" id="motionBtn" type="button" hidden></button>
 
 <script>
 (function () {
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var sysReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var motionOn = false;
+  try { motionOn = localStorage.getItem('motion') === 'on'; } catch (e) {}
+  var reduce = sysReduce && !motionOn;
+  if (reduce) document.documentElement.classList.add('rm');
   var NS = 'http://www.w3.org/2000/svg';
 
   /* ---------- Guilloche generators ---------- */
@@ -1103,16 +1122,19 @@
     clearTimers(); D.t0 = null; D.interactive = true; go(0);
   });
 
-  /* Card tilt */
+  /* Card tilt: mouse, or touch and drag on the card */
   var cw = document.getElementById('cardwrap'), card = document.getElementById('bankCard');
   if (!reduce) {
-    cw.addEventListener('pointermove', function (e) {
-      var r = card.getBoundingClientRect();
-      var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+    var tiltCard = function (x, y) {
+      var r = card.getBoundingClientRect(), px = (x - r.left) / r.width, py = (y - r.top) / r.height;
       card.style.transform = 'rotateX(' + ((.5 - py) * 16).toFixed(1) + 'deg) rotateY(' + ((px - .5) * 20).toFixed(1) + 'deg)';
       card.style.setProperty('--sx', (px * 100) + '%'); card.style.setProperty('--sy', (py * 100) + '%');
-    });
+    };
+    cw.addEventListener('pointermove', function (e) { tiltCard(e.clientX, e.clientY); });
     cw.addEventListener('pointerleave', function () { card.style.transform = ''; });
+    cw.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (t) tiltCard(t.clientX, t.clientY); }, { passive: true });
+    cw.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (t) tiltCard(t.clientX, t.clientY); }, { passive: true });
+    ['touchend', 'touchcancel'].forEach(function (ev) { cw.addEventListener(ev, function () { setTimeout(function () { card.style.transform = ''; }, 600); }, { passive: true }); });
   }
 
   go(0);
@@ -1152,48 +1174,78 @@
     }
   }
 
-  /* Custom cursor ring */
-  if (fine && !reduce) {
+  /* Cursor ring: follows the mouse on desktop and your finger on touch screens */
+  if (!reduce) {
     var ring = document.getElementById('cursor'), dot = document.getElementById('cursorDot');
-    var mx = 0, my = 0, rx = 0, ry = 0, shown = false;
-    window.addEventListener('pointermove', function (e) {
-      mx = e.clientX; my = e.clientY;
-      if (!shown) { shown = true; rx = mx; ry = my; ring.classList.add('on'); dot.classList.add('on'); }
-      dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-    }, { passive: true });
-    (function loop() {
-      rx += (mx - rx) * .18; ry += (my - ry) * .18;
+    var mx = 0, my = 0, rx = 0, ry = 0, shown = false, ringRaf = 0, hideT = 0;
+    var INTERACTIVE = 'a, button, input, .proj, .stat, .t-node, [role=option]';
+    var ringLoop = function () {
+      rx += (mx - rx) * .2; ry += (my - ry) * .2;
       ring.style.transform = 'translate(' + rx.toFixed(1) + 'px,' + ry.toFixed(1) + 'px)';
-      requestAnimationFrame(loop);
-    })();
-    document.addEventListener('pointerover', function (e) {
-      ring.classList.toggle('big', !!(e.target.closest && e.target.closest('a, button, input, .proj, .stat, .t-node, [role=option]')));
-    });
-    document.documentElement.addEventListener('mouseleave', function () { shown = false; ring.classList.remove('on'); dot.classList.remove('on'); });
+      ringRaf = (shown || Math.abs(mx - rx) > .5 || Math.abs(my - ry) > .5) ? requestAnimationFrame(ringLoop) : 0;
+    };
+    var ringMove = function (x, y, target) {
+      mx = x; my = y; clearTimeout(hideT);
+      if (!shown) { shown = true; rx = x; ry = y; ring.classList.add('on'); dot.classList.add('on'); }
+      dot.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      ring.classList.toggle('big', !!(target && target.closest && target.closest(INTERACTIVE)));
+      if (!ringRaf) ringRaf = requestAnimationFrame(ringLoop);
+    };
+    var ringHide = function (delay) {
+      clearTimeout(hideT);
+      hideT = setTimeout(function () { shown = false; ring.classList.remove('on'); dot.classList.remove('on'); }, delay || 0);
+    };
+    window.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') ringMove(e.clientX, e.clientY, e.target); }, { passive: true });
+    document.documentElement.addEventListener('mouseleave', function () { ringHide(0); });
+    document.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (t) ringMove(t.clientX, t.clientY, e.target); }, { passive: true });
+    document.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (t) ringMove(t.clientX, t.clientY, document.elementFromPoint(t.clientX, t.clientY)); }, { passive: true });
+    ['touchend', 'touchcancel'].forEach(function (ev) { document.addEventListener(ev, function () { ringHide(350); }, { passive: true }); });
   }
 
-  /* Magnetic buttons */
-  if (fine && !reduce) {
-    document.querySelectorAll('.btn, .nav .cv').forEach(function (b) {
-      b.addEventListener('pointermove', function (e) {
-        var r = b.getBoundingClientRect();
-        b.style.translate = ((e.clientX - (r.left + r.width / 2)) * .25).toFixed(1) + 'px ' + ((e.clientY - (r.top + r.height / 2)) * .35).toFixed(1) + 'px';
+  /* Buttons lean toward the pointer, or toward your finger while you press */
+  if (!reduce) {
+    document.querySelectorAll('.btn, .nav .cv').forEach(function (btn) {
+      var pull = function (x, y) {
+        var r = btn.getBoundingClientRect();
+        btn.style.translate = ((x - (r.left + r.width / 2)) * .25).toFixed(1) + 'px ' + ((y - (r.top + r.height / 2)) * .35).toFixed(1) + 'px';
+      };
+      btn.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') pull(e.clientX, e.clientY); });
+      btn.addEventListener('pointerleave', function () { btn.style.translate = ''; });
+      btn.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (t) pull(t.clientX, t.clientY); }, { passive: true });
+      ['touchend', 'touchcancel'].forEach(function (ev) {
+        btn.addEventListener(ev, function () { setTimeout(function () { btn.style.translate = ''; }, 200); }, { passive: true });
       });
-      b.addEventListener('pointerleave', function () { b.style.translate = ''; });
     });
   }
 
-  /* 3D tilt with glare on stat panels and project cards */
-  if (fine && !reduce) {
+  /* 3D tilt with glare on stat panels and project cards (mouse hover, or press and hold on touch) */
+  if (!reduce) {
     document.querySelectorAll('.proj, .stat').forEach(function (el) {
       el.classList.add('tilt');
-      el.addEventListener('pointermove', function (e) {
-        var r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      var startX = 0, startY = 0, resetT = 0;
+      var tilt = function (x, y) {
+        var r = el.getBoundingClientRect(), px = (x - r.left) / r.width, py = (y - r.top) / r.height;
         el.style.transition = 'transform .12s ease-out, translate .25s ease, border-color .25s ease, box-shadow .25s ease';
         el.style.transform = 'perspective(900px) rotateX(' + ((.5 - py) * 7).toFixed(2) + 'deg) rotateY(' + ((px - .5) * 9).toFixed(2) + 'deg)';
         el.style.setProperty('--gx', (px * 100).toFixed(1) + '%'); el.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
-      });
-      el.addEventListener('pointerleave', function () { el.style.transform = ''; });
+      };
+      var settle = function (delay) {
+        clearTimeout(resetT);
+        resetT = setTimeout(function () { el.style.transform = ''; el.classList.remove('glow'); }, delay || 0);
+      };
+      el.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') tilt(e.clientX, e.clientY); });
+      el.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') settle(0); });
+      el.addEventListener('touchstart', function (e) {
+        var t = e.touches[0]; if (!t) return;
+        clearTimeout(resetT); startX = t.clientX; startY = t.clientY;
+        el.classList.add('glow'); tilt(t.clientX, t.clientY);
+      }, { passive: true });
+      el.addEventListener('touchmove', function (e) {
+        var t = e.touches[0]; if (!t) return;
+        if (Math.abs(t.clientX - startX) > 14 || Math.abs(t.clientY - startY) > 14) { settle(0); return; }
+        tilt(t.clientX, t.clientY);
+      }, { passive: true });
+      ['touchend', 'touchcancel'].forEach(function (ev) { el.addEventListener(ev, function () { settle(500); }, { passive: true }); });
     });
   }
 
@@ -1337,12 +1389,12 @@
   var heroEl = document.getElementById('hero');
   var spot = document.getElementById('spot');
   var dust = document.getElementById('dust'), dx = dust.getContext('2d');
-  var P = [], dW = 0, dH = 0, mouse = { x: -999, y: -999 }, dustOn = false, dustRaf = 0;
+  var P = [], dW = 0, dH = 0, mouse = { x: -999, y: -999 }, dustOn = false, dustRaf = 0, touching = false;
   function dustResize() {
     var r = heroEl.getBoundingClientRect();
     dW = r.width; dH = r.height; dust.width = dW * dpr; dust.height = dH * dpr;
     dx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var n = Math.min(80, Math.round(dW / 16)); P = [];
+    var n = Math.min(90, Math.max(30, Math.round(dW * dH / 14000))); P = [];
     for (var i = 0; i < n; i++) {
       var bx = (Math.random() - .5) * .3, by = (Math.random() - .5) * .3;
       P.push({ x: Math.random() * dW, y: Math.random() * dH, vx: bx, vy: by, bx: bx, by: by, r: 1 + Math.random() * 1.6, a: (.25 + Math.random() * .5).toFixed(2) });
@@ -1351,6 +1403,11 @@
   function dustFrame() {
     if (!dustOn) { dustRaf = 0; return; }
     dx.clearRect(0, 0, dW, dH);
+    if (!fine && !touching) {
+      var tt = performance.now();
+      mouse.x = dW * (.5 + .38 * Math.cos(tt / 2300)); mouse.y = dH * (.5 + .32 * Math.sin(tt / 1900));
+      spot.style.setProperty('--sx', mouse.x + 'px'); spot.style.setProperty('--sy', mouse.y + 'px');
+    }
     var i, j, p, q;
     for (i = 0; i < P.length; i++) {
       p = P[i];
@@ -1392,6 +1449,20 @@
       spot.style.setProperty('--sx', mouse.x + 'px'); spot.style.setProperty('--sy', mouse.y + 'px');
     });
     heroEl.addEventListener('pointerleave', function () { mouse.x = -999; mouse.y = -999; });
+    var touchEnd = 0;
+    var touchTrack = function (e) {
+      var t = e.touches[0]; if (!t) return;
+      touching = true; clearTimeout(touchEnd);
+      var r = heroEl.getBoundingClientRect();
+      mouse.x = t.clientX - r.left; mouse.y = t.clientY - r.top;
+      spot.style.setProperty('--sx', mouse.x + 'px'); spot.style.setProperty('--sy', mouse.y + 'px');
+      pxo = -(t.clientX / window.innerWidth - .5) * 50; pyo = -(t.clientY / window.innerHeight - .5) * 50; reqRos();
+    };
+    heroEl.addEventListener('touchstart', touchTrack, { passive: true });
+    heroEl.addEventListener('touchmove', touchTrack, { passive: true });
+    ['touchend', 'touchcancel'].forEach(function (ev) {
+      heroEl.addEventListener(ev, function () { touchEnd = setTimeout(function () { touching = false; }, 900); }, { passive: true });
+    });
   }
 
   /* ---------- Click ripple ---------- */
@@ -1713,6 +1784,44 @@
   });
   document.getElementById('paletteBtn').addEventListener('click', palOpen);
   if (/Mac|iPhone|iPad/.test(navigator.platform)) document.querySelector('.kbd kbd').textContent = '⌘ K';
+
+  /* ================= v5: TOUCH FRIENDLY EXTRAS ================= */
+  /* Tap a letter in the name to make it jump */
+  var nameH1 = document.querySelector('.hero h1');
+  if (nameH1 && !reduce) {
+    nameH1.addEventListener('pointerdown', function (e) {
+      var ch = e.target.closest && e.target.closest('.ch'); if (!ch) return;
+      ch.classList.remove('pop'); void ch.offsetWidth; ch.classList.add('pop');
+      ch.addEventListener('animationend', function () { ch.classList.remove('pop'); }, { once: true });
+    });
+  }
+  if (nameH1 && !reduce) {
+    nameH1.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'mouse') return;
+      var hit = document.elementFromPoint(e.clientX, e.clientY);
+      var ch = hit && hit.closest && hit.closest('.ch');
+      if (!ch || ch.classList.contains('pop')) return;
+      ch.classList.add('pop');
+      ch.addEventListener('animationend', function () { ch.classList.remove('pop'); }, { once: true });
+    });
+  }
+  /* On touch screens there is no hover, so run the card wave animation while a card is on screen */
+  if (!fine && !reduce) {
+    var liveIO = new IntersectionObserver(function (es) {
+      es.forEach(function (en) { en.target.classList.toggle('live', en.isIntersecting); });
+    }, { threshold: .35 });
+    projEls.forEach(function (el) { liveIO.observe(el); });
+  }
+  /* Let visitors who have "reduce motion" on choose to see the animations */
+  var motionBtn = document.getElementById('motionBtn');
+  if (sysReduce) {
+    motionBtn.hidden = false;
+    motionBtn.textContent = reduce ? 'Animations are off. Tap to play them' : 'Pause animations';
+    motionBtn.addEventListener('click', function () {
+      try { if (reduce) localStorage.setItem('motion', 'on'); else localStorage.removeItem('motion'); } catch (e) {}
+      window.location.reload();
+    });
+  }
 
   /* ---------- Copy email ---------- */
   var statusEl = document.getElementById('copyStatus');
